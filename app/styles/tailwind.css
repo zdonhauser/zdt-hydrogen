@@ -3,4 +3,19 @@
  * https://tailwindcss.com/docs/v4-beta#css-first-configuration
  */
 
-@import 'tailwindcss';
+ @import 'tailwindcss';
+
+@layer utilities {
+  @keyframes scroll-ribbon {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-scroll-ribbon {
+    animation: scroll-ribbon linear infinite;
+  }
+}

@@ -13,16 +13,6 @@ type AsideContextValue = {
   close: () => void;
 };
 
-/**
- * A side bar component with Overlay
- * @example
- * ```jsx
- * <Aside type="search" heading="SEARCH">
- *  <input type="search" />
- *  ...
- * </Aside>
- * ```
- */
 export function Aside({
   children,
   heading,
@@ -53,22 +43,38 @@ export function Aside({
   }, [close, expanded]);
 
   return (
-    <div
-      aria-modal
-      className={`overlay ${expanded ? 'expanded' : ''}`}
-      role="dialog"
-    >
-      <button className="close-outside" onClick={close} />
-      <aside>
-        <header>
+    <>
+      {/* Backdrop behind the drawer */}
+      <div
+        onClick={close}
+        className={`fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+          expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Drawer panel */}
+      <div
+        className={`fixed top-0 right-0 z-[9999] w-full sm:w-96 h-full transition-transform duration-300 ease-in-out bg-white text-black flex flex-col shadow-2xl border-l-4 border-black ${
+          expanded ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        aria-modal
+        role="dialog"
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-yellow-400 text-black font-extrabold text-xl uppercase tracking-widest">
           <h3>{heading}</h3>
-          <button className="close reset" onClick={close} aria-label="Close">
-            &times;
+          <button
+            className="text-3xl font-black leading-none px-3 py-1 rounded-full bg-black text-yellow-400 hover:bg-yellow-500 hover:text-black transition"
+            onClick={close}
+            aria-label="Close"
+          >
+            ×
           </button>
-        </header>
-        <main>{children}</main>
-      </aside>
-    </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </div>
+    </>
   );
 }
 
