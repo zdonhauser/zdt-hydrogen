@@ -1,43 +1,52 @@
-import React from 'react';
+import React, {useRef, useState} from 'react';
+import {Link} from '@remix-run/react';
 
 export default function ScrollingRibbon({
   items = [],
-  speed = 50, // lower = faster
+  handles = [],
+  speed = 100,
 }: {
   items: string[];
   speed?: number;
+  handles?: string[];
 }) {
+  const renderedItems = [...items, ...items];
+  const [isPaused, setIsPaused] = useState(false);
+
   return (
-    <div className="relative w-full overflow-hidden border-y-4 border-black bg-yellow-400 text-black font-extrabold uppercase tracking-widest text-lg sm:text-xl">
+    <div
+      className="relative w-full border-y-4 border-black bg-yellow-400 text-black font-extrabold uppercase tracking-widest text-lg sm:text-xl overflow-x-auto overflow-y-hidden select-none touch-pan-x scrollbar-hide"
+      style={{
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-x',
+      }}
+      role="marquee"
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
+      onMouseDown={() => setIsPaused(true)}
+      onMouseUp={() => setIsPaused(false)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div
-        className="whitespace-nowrap inline-block animate-[scroll-left_linear_infinite]"
+        className="whitespace-nowrap inline-block animate-[scroll-left_linear_infinite] select-none"
         style={{
           animationDuration: `${speed}s`,
+          animationPlayState: isPaused ? 'paused' : 'running',
         }}
       >
-        {items.map((item) => (
-          <>
-            <span key={item} className="inline-block px-8">
+        {renderedItems.map((item, i) => (
+          <React.Fragment key={`${item}-${i}`}>
+            <Link
+              to={`/products/${handles[i % handles.length]}`}
+              className="inline-block px-8 hover:text-red-600 transition-colors"
+            >
               {item}
-            </span>
-            <span key={`${item}-*`} className="inline-block px-8">
-              ✦
-            </span>
-          </>
-        ))}
-        {items.map((item) => (
-          <>
-            <span key={`copy-${item}`} className="inline-block px-8">
-              {item}
-            </span>
-            <span key={`copy-${item}-*`} className="inline-block px-8">
-              ✦
-            </span>
-        </>
+            </Link>
+            <span className="inline-block px-8">✦</span>
+          </React.Fragment>
         ))}
       </div>
 
-      {/* Inline keyframes for Tailwind v4 compatibility */}
       <style>
         {`
           @keyframes scroll-left {
@@ -47,6 +56,14 @@ export default function ScrollingRibbon({
             100% {
               transform: translateX(-50%);
             }
+          }
+          .select-none {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
           }
         `}
       </style>

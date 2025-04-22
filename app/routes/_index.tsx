@@ -20,8 +20,6 @@ export async function loader(args: LoaderFunctionArgs) {
   const {context} = args;
   const attractions = await context.storefront.query(ATTRACTION_PRODUCTS_QUERY);
 
-  console.log('attractions', attractions);
-
   return {
     ...deferredData,
     ...criticalData,
@@ -60,12 +58,13 @@ export default function Homepage() {
       <Hero id="hero" />
       <ScrollingRibbon
         items={attractions.map((a: any) => a.title)}
+        handles={attractions.map((a: any) => a.handle)}
       />
-      <div className="h-[3000vh] bg-black" />
+      <div className="h-[800vh] bg-black" />
     </>
   );
 }
-
+/*
 function FeaturedCollection({
   collection,
 }: {
@@ -127,7 +126,7 @@ function RecommendedProducts({
     </div>
   );
 }
-
+*/
 // list of products with tag 'attractions'
 const ATTRACTION_PRODUCTS_QUERY = `#graphql
   query AttractionProducts($country: CountryCode, $language: LanguageCode)

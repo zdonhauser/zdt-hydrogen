@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Link} from '@remix-run/react';
 
 interface HeroProps {
@@ -7,74 +7,85 @@ interface HeroProps {
 
 export default function Hero({id}: HeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLandscape, setIsLandscape] = useState(true); // default true to avoid SSR flicker
 
   useEffect(() => {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    setIsLandscape(isLandscape);
+
     const video = videoRef.current;
     if (!video) return;
-  
+
     const scrollRange = 1000;
     const pauseTime = 1.6;
-    let scrollActive = false;
     let scrollStartY = 0;
     let scrollStartTime = 0;
     let raf: number;
-  
+    let currentScroll = window.scrollY;
+    let targetScroll = window.scrollY;
+
+    // Reduce scroll sensitivity on desktop / landscape
+    const scrollDampener = isLandscape ? 0.4 : 1; // tweak to taste
+
     const handleScroll = () => {
-      if (!video || !scrollActive) return;
-  
-      if (!video.paused) video.pause();
-  
-      const scrollDelta = window.scrollY - scrollStartY;
+      targetScroll = window.scrollY;
+    };
+
+    const smoothScrollUpdate = () => {
+      if (!video) return;
+
+      currentScroll += (targetScroll - currentScroll) * 0.1;
+
+      const scrollDelta = (currentScroll - scrollStartY) * scrollDampener;
       const duration = video.duration || 1;
-  
+
       const loopedTime =
         (((scrollStartTime * scrollRange + scrollDelta) % scrollRange) /
           scrollRange) *
         duration;
-  
+
       video.currentTime = loopedTime;
+      raf = requestAnimationFrame(smoothScrollUpdate);
     };
-  
+
     const startScrollPlayback = () => {
       if (!video) return;
-      scrollActive = true;
+
       scrollStartY = window.scrollY;
       scrollStartTime = (video.currentTime || 0) / (video.duration || 1);
-  
+
       video.pause();
       video.removeAttribute('autoplay');
       video.removeAttribute('loop');
       video.removeAttribute('muted');
-  
-      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      window.addEventListener('scroll', handleScroll, {passive: true});
+      raf = requestAnimationFrame(smoothScrollUpdate);
     };
-  
+
     const monitorPlayback = () => {
-      if (!video || scrollActive) return;
-  
+      if (!video) return;
+
       if (video.currentTime >= pauseTime) {
         startScrollPlayback();
         return;
       }
-  
+
       raf = requestAnimationFrame(monitorPlayback);
     };
-  
+
     const onMeta = () => {
-      // Start playing from beginning
       video.currentTime = 0;
       video.play().catch(() => {});
-  
-      // Begin checking for pause point
       raf = requestAnimationFrame(monitorPlayback);
     };
-  
+
     if (video.readyState >= 1) {
       onMeta();
     } else {
       video.addEventListener('loadedmetadata', onMeta);
     }
-  
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', handleScroll);
@@ -82,42 +93,61 @@ export default function Hero({id}: HeroProps) {
     };
   }, []);
 
+  const videoUrl = isLandscape
+    ? 'https://cdn.shopify.com/videos/c/o/v/94b01b5f92834ddd8e7b39ee06b2e09c.mp4'
+    : 'https://cdn.shopify.com/videos/c/o/v/71c337e0417740ba91b5041e49237449.mp4';
+
   return (
     <div className="relative top-0 w-full overflow-hidden text-white">
       <div className="inset-0 w-full h-[80vh] z-0 p-0">
         <video
           id="hero-video"
           ref={videoRef}
-          src="/video/switchback/sb_hero.mp4"
+          src={videoUrl}
           autoPlay
           muted
           playsInline
           preload="auto"
           className="w-full h-full object-cover object-center md:object-[center_30%]"
-          poster="/video/switchback/hero_poster.jpg"
+          poster="https://cdn.shopify.com/s/files/1/0038/2527/0897/files/hero_poster.jpg"
         />
       </div>
 
-      <div className="absolute h-screen inset-0 z-10 flex flex-col items-center justify-center px-6 text-center pointer-events-none bg-gradient-to-b from-transparent via-black/30 to-black/80">
-        <br />
-        <br />
-        <img
-          src="/logos/logo_zdts.png"
-          alt="ZDT's Logo"
-          className="w-64 md:w-80 mb-6 drop-shadow-[6px_6px_0_rgba(0,0,0,0.9)] pointer-events-auto"
-        />
-        <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.8)] tracking-tight uppercase">
-          FAMILY FUN AWAITS
-        </h1>
-        <p className="mt-4 max-w-xl text-base md:text-lg text-white font-semibold drop-shadow-md">
-          Experience the thrill of our rides and attractions!
-        </p>
-        <Link
-          to="/products/unlimitedwristband"
-          className="mt-6 bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 px-8 rounded-full text-lg shadow-[0_3px_0_rgba(0,0,0,0.8)] transition-all duration-150 pointer-events-auto uppercase tracking-wider"
+      <div
+        className={`absolute inset-0 h-screen z-10 pointer-events-none ${
+          isLandscape
+            ? 'flex flex-row items-center'
+            : 'flex flex-col justify-center text-center'
+        }`}
+      >
+        {isLandscape && (
+          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-black via-black/90 to-transparent z-0 pointer-events-none" />
+        )}
+
+        {/* Content wrapper */}
+        <div
+          className={`relative z-10 px-6 ${
+            isLandscape ? 'w-1/2 text-left pl-12' : 'items-center'
+          } flex flex-col pointer-events-auto`}
         >
-          TICKETS
-        </Link>
+          <img
+            src="/logos/logo_zdts.png"
+            alt="ZDT's Logo"
+            className="w-64 md:w-80 mb-6 drop-shadow-[6px_6px_0_rgba(0,0,0,0.9)]"
+          />
+          <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.8)] tracking-tight uppercase">
+            FAMILY FUN AWAITS
+          </h1>
+          <p className="mt-4 max-w-xl text-base md:text-lg text-white font-semibold drop-shadow-md">
+            Adrenaline for all ages. Smiles guaranteed.
+          </p>
+          <Link
+            to="/products/unlimitedwristband"
+            className="mt-6 bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 px-8 rounded-full text-lg shadow-[0_3px_0_rgba(0,0,0,0.8)] transition-all duration-150 uppercase tracking-wider"
+          >
+            TICKETS
+          </Link>
+        </div>
       </div>
     </div>
   );
