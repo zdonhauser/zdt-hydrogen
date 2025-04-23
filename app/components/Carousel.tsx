@@ -43,6 +43,8 @@ export default function Carousel({products}: {products: Product[]}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const timeoutRef = useRef<number>();
 
+  const hasMounted = useRef(false);
+
   // 1) watch which card is most centered
   useEffect(() => {
     const container = containerRef.current;
@@ -86,14 +88,18 @@ export default function Carousel({products}: {products: Product[]}) {
       const el = container?.querySelector<HTMLElement>(
         `[data-carousel-index="${activeIndex}"]`,
       );
-      el?.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
+      if (hasMounted.current) {
+        el?.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'center',
+          block: 'nearest',
+        });
+      } else {
+        hasMounted.current = true;
+      }
     }, 100);
   }, [activeIndex]);
-
+  
   const handleClick = (index: number, href: string) => {
     if (index === activeIndex) {
       window.location.href = href; // or use `navigate()` if using router
