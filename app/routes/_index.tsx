@@ -9,10 +9,39 @@ import type {
 import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
+import Calendar from '~/components/Calendar';
 
 export const meta: MetaFunction = () => {
   return [{title: 'ZDT’s Amusement Park'}];
 };
+//define hours type { "yy": { "m": {"d": "hours text"}}}
+interface HoursData {
+  [year: string]: {
+    [month: string]: {
+      [day: string]: string;
+    };
+  };
+}
+
+const HOURS_QUERY = `#graphql
+  query CalendarHours {
+    metaobjects(type: "park_hours", first: 1) {
+      edges {
+        node {
+          hours: field(key: "hours") {
+            value
+          }
+          water: field(key: "water") {
+            value
+          }
+          notes: field(key: "notes") {
+            value
+          }
+        }
+      }
+    }
+  }
+`;
 
 export async function loader(args: LoaderFunctionArgs) {
   const deferredData = loadDeferredData(args);
@@ -23,11 +52,25 @@ export async function loader(args: LoaderFunctionArgs) {
   const admissionCollection = await context.storefront.query(ADMISSION_PRODUCTS_QUERY);
   const admissionProducts = admissionCollection.collections?.nodes[0].products?.nodes ?? [];
 
+  const {metaobjects} = await context.storefront.query(HOURS_QUERY);
+  const edge = metaobjects?.edges?.[0];
+
+  const hoursField = edge?.node?.hours;
+  const waterField = edge?.node?.water;
+  const notesField = edge?.node?.notes;
+
+  const hoursData: HoursData = hoursField?.value ? JSON.parse(hoursField.value) : {};
+  const waterData: HoursData = waterField?.value ? JSON.parse(waterField.value) : {};
+  const notesData: HoursData = notesField?.value ? JSON.parse(notesField.value) : {};
+
   return {
     ...deferredData,
     ...criticalData,
     attractions: attractions.products.nodes,
     admissionProducts,
+    hoursData,
+    waterData,
+    notesData,
   };
 }
 
@@ -55,7 +98,7 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 }
 
 export default function Homepage() {
-  const {attractions, admissionProducts} = useLoaderData<typeof loader>();
+  const {attractions, admissionProducts, hoursData, waterData, notesData} = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -65,7 +108,8 @@ export default function Homepage() {
         handles={attractions.map((a: any) => a.handle)}
       />
       <Carousel products={admissionProducts} />
-      <div className="h-[800vh] bg-black" />
+      <Calendar hoursData={hoursData} waterData={waterData} notesData={notesData} />
+      <div className="h-[20vh] bg-black" />
     </>
   );
 }

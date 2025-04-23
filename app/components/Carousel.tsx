@@ -42,6 +42,7 @@ export default function Carousel({products}: {products: Product[]}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const timeoutRef = useRef<number>();
+  const [isMounted, setIsMounted] = useState(false);
 
   const disableScrollToCenter = useRef(false);
 
@@ -56,7 +57,7 @@ export default function Carousel({products}: {products: Product[]}) {
 
     // Determine whether we need to center items
     // Disable centering only if the total scroll width is less than or equal to the client width
-    disableScrollToCenter.current = container.scrollWidth <= container.clientWidth;
+    //disableScrollToCenter.current = container.scrollWidth <= container.clientWidth;
 
     const obs = new IntersectionObserver(
       (entries) => {
@@ -87,19 +88,20 @@ export default function Carousel({products}: {products: Product[]}) {
 
   // 2) whenever activeIndex changes, smooth-scroll it into center
   useEffect(() => {
-    console.log('activeIndex changed to', activeIndex);
-    if (disableScrollToCenter.current) return;
+    //if (disableScrollToCenter.current) return;
     window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
       const container = containerRef.current;
       const el = container?.querySelector<HTMLElement>(
         `[data-carousel-index="${activeIndex}"]`,
       );
+      if (!isMounted) return;
       el?.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
         block: 'center',
       });
+      setIsMounted(true);
     }, 100);
   }, [activeIndex]);
   
