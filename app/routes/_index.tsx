@@ -8,6 +8,7 @@ import type {
 } from 'storefrontapi.generated';
 import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
+import Carousel from '~/components/Carousel';
 
 export const meta: MetaFunction = () => {
   return [{title: 'ZDT’s Amusement Park'}];
@@ -19,11 +20,14 @@ export async function loader(args: LoaderFunctionArgs) {
 
   const {context} = args;
   const attractions = await context.storefront.query(ATTRACTION_PRODUCTS_QUERY);
+  const admissionCollection = await context.storefront.query(ADMISSION_PRODUCTS_QUERY);
+  const admissionProducts = admissionCollection.collections?.nodes[0].products?.nodes ?? [];
 
   return {
     ...deferredData,
     ...criticalData,
     attractions: attractions.products.nodes,
+    admissionProducts,
   };
 }
 
@@ -51,7 +55,7 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 }
 
 export default function Homepage() {
-  const {attractions} = useLoaderData<typeof loader>();
+  const {attractions, admissionProducts} = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -60,6 +64,7 @@ export default function Homepage() {
         items={attractions.map((a: any) => a.title)}
         handles={attractions.map((a: any) => a.handle)}
       />
+      <Carousel products={admissionProducts} />
       <div className="h-[800vh] bg-black" />
     </>
   );
@@ -189,6 +194,39 @@ const RECOMMENDED_PRODUCTS_QUERY = `#graphql
     products(first: 4, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         ...RecommendedProduct
+      }
+    }
+  }
+` as const;
+
+const ADMISSION_PRODUCTS_QUERY = `#graphql
+  query AdmissionProducts($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    collections(first: 1, reverse: false, query: "Admission") {
+      nodes {
+        products(first: 100) {
+          nodes {
+            id
+            title
+            handle
+            descriptionHtml
+            priceRange {
+              minVariantPrice {
+                amount
+                currencyCode
+              }
+            }
+            images(first: 1) {
+              nodes {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
+        }
       }
     }
   }

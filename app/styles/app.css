@@ -3,13 +3,23 @@
  * Cleaned up to fit the new bold and bright "Feastables" aesthetic.
  */
 
- :root {
+:root {
   --aside-width: 400px;
   --header-height: 64px;
   --color-dark: #000;
   --color-light: #fff;
-  --color-brand: #facc15; /* Tailwind yellow-400 */
-  --color-brand-hover: #fde047; /* yellow-300 */
+  --color-brand-yellow: #fff200;
+  --color-brand-yellow-hover: #ffeb3b;
+  --color-brand-red: #ed1c24;
+  --color-brand-red-hover: #c4121a;
+  --color-brand-green: #8bc34a;
+  --color-brand-green-hover: #689f38;
+  --color-brand-blue: #00cfff;
+  --color-brand-blue-hover: #00b5df;
+  --color-brand-pink: #ff6ec7;
+  --color-brand-pink-hover: #e857b2;
+  --color-brand-cream: #fffcf0;
+  --color-brand-cream-hover: #f5f0d8;
 }
 
 img {
@@ -104,7 +114,8 @@ img {
 }
 
 /* 🎢 Global scrollbar (but skip inline scrollers like the ribbon) */
-html, body {
+html,
+body {
   scrollbar-width: thick;
   scrollbar-color: var(--color-dark) var(--color-brand);
 }

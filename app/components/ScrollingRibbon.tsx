@@ -14,8 +14,9 @@ export default function ScrollingRibbon({
   const [isPaused, setIsPaused] = useState(false);
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
-      className="relative w-full border-y-4 border-black bg-yellow-400 text-black font-extrabold uppercase tracking-widest text-lg sm:text-xl overflow-x-auto overflow-y-hidden select-none touch-pan-x scrollbar-hide"
+      className="relative w-full border-y-4 border-black bg-[var(--color-brand-yellow)] text-black font-extrabold uppercase tracking-widest text-lg sm:text-xl overflow-x-auto overflow-y-hidden select-none touch-pan-x scrollbar-hide"
       style={{
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-x',

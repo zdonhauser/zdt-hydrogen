@@ -10,9 +10,20 @@ export default function Hero({id}: HeroProps) {
   const [isLandscape, setIsLandscape] = useState(true); // default true to avoid SSR flicker
 
   useEffect(() => {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    setIsLandscape(isLandscape);
+    const handleResize = () => {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      setIsLandscape(isLandscape);
+    };
 
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -91,7 +102,7 @@ export default function Hero({id}: HeroProps) {
       window.removeEventListener('scroll', handleScroll);
       video.removeEventListener('loadedmetadata', onMeta);
     };
-  }, []);
+  }, [isLandscape]);
 
   const videoUrl = isLandscape
     ? 'https://cdn.shopify.com/videos/c/o/v/94b01b5f92834ddd8e7b39ee06b2e09c.mp4'
@@ -143,7 +154,7 @@ export default function Hero({id}: HeroProps) {
           </p>
           <Link
             to="/products/unlimitedwristband"
-            className="mt-6 bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3 px-8 rounded-full text-lg shadow-[0_3px_0_rgba(0,0,0,0.8)] transition-all duration-150 uppercase tracking-wider"
+            className="mt-6 bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-black font-black py-3 px-8 rounded-full text-lg shadow-[0_3px_0_rgba(0,0,0,0.8)] transition-all duration-150 uppercase tracking-wider"
           >
             TICKETS
           </Link>

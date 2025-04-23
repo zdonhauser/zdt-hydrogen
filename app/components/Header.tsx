@@ -27,7 +27,7 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-yellow-400 text-black border-b-4 border-black font-black tracking-wide shadow-[0_4px_0_rgba(0,0,0,0.6)] px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full bg-[var(--color-brand-yellow)] text-black border-b-4 border-black font-black tracking-wide shadow-[0_4px_0_rgba(0,0,0,0.6)] px-4 py-3 flex items-center justify-between">
         <NavLink to="/" className="flex items-center">
           <img
             src="/logos/black.png"
@@ -162,7 +162,7 @@ function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <button
-      className="bg-black text-yellow-400 px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-yellow-500 hover:text-black transition-all md:hidden"
+      className="bg-black text-[var(--color-brand-yellow)] px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition-all md:hidden"
       onClick={() => open('mobile')}
     >
       ☰
@@ -190,7 +190,7 @@ function CartBadge({count}: {count: number | null}) {
   return (
     <a
       href="/cart"
-      className="bg-black text-yellow-400 px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-yellow-500 hover:text-black transition-all"
+      className="bg-black text-[var(--color-brand-yellow)] px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition-all"
       onClick={(e) => {
         e.preventDefault();
         open('cart');

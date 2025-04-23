@@ -61,10 +61,10 @@ export function Aside({
         aria-modal
         role="dialog"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-yellow-400 text-black font-extrabold text-xl uppercase tracking-widest">
+        <div className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-[var(--color-brand-yellow)] text-black font-extrabold text-xl uppercase tracking-widest">
           <h3>{heading}</h3>
           <button
-            className="text-3xl font-black leading-none px-3 py-1 rounded-full bg-black text-yellow-400 hover:bg-yellow-500 hover:text-black transition"
+            className="text-3xl font-black leading-none px-3 py-1 rounded-full bg-black text-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-hover-yellow)] hover:text-black transition"
             onClick={close}
             aria-label="Close"
           >
