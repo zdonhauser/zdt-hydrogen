@@ -43,15 +43,20 @@ export default function Carousel({products}: {products: Product[]}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const timeoutRef = useRef<number>();
 
-  const hasMounted = useRef(false);
+  const disableScrollToCenter = useRef(false);
 
   // 1) watch which card is most centered
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
     const items = Array.from(
-      container.querySelectorAll<HTMLElement>('[data-carousel-index]'),
+      container.querySelectorAll<HTMLElement>('[data-carousel-index]')
     );
+
+    // Determine whether we need to center items
+    // Disable centering only if the total scroll width is less than or equal to the client width
+    disableScrollToCenter.current = container.scrollWidth <= container.clientWidth;
 
     const obs = new IntersectionObserver(
       (entries) => {
@@ -82,21 +87,19 @@ export default function Carousel({products}: {products: Product[]}) {
 
   // 2) whenever activeIndex changes, smooth-scroll it into center
   useEffect(() => {
+    console.log('activeIndex changed to', activeIndex);
+    if (disableScrollToCenter.current) return;
     window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
       const container = containerRef.current;
       const el = container?.querySelector<HTMLElement>(
         `[data-carousel-index="${activeIndex}"]`,
       );
-      if (hasMounted.current) {
-        el?.scrollIntoView({
-          behavior: 'smooth',
-          inline: 'center',
-          block: 'nearest',
-        });
-      } else {
-        hasMounted.current = true;
-      }
+      el?.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'center',
+      });
     }, 100);
   }, [activeIndex]);
   
@@ -113,15 +116,14 @@ export default function Carousel({products}: {products: Product[]}) {
       <div
         ref={containerRef}
         className="
-    flex gap-4
-    overflow-x-auto snap-x snap-mandatory
-    scroll-smooth scrollbar-hide
-  "
+          flex gap-4
+          overflow-x-auto snap-x snap-mandatory
+          scroll-smooth scrollbar-hide
+        "
         style={{
           paddingTop: '4rem',
           paddingBottom: '4rem',
-          paddingLeft: 'calc(50vw - 180px)', // half viewport - half card width
-          paddingRight: 'calc(50vw - 180px)',
+          paddingInline: 'max(1rem, calc(50vw - 180px))',
         }}
       >
         {products.map((product, i) => {
@@ -143,7 +145,7 @@ export default function Carousel({products}: {products: Product[]}) {
                 shrink-0 snap-center
                 transition-transform duration-300 ease-in-out
                 transform-gpu
-                ${isActive ? 'scale-110 z-10' : 'scale-95 opacity-70'}
+                ${isActive ? 'scale-110 z-10 ' : 'scale-95 opacity-70'}
               `}
               style={{
                 width,

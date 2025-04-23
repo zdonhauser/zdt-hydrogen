@@ -7,7 +7,7 @@ interface HeroProps {
 
 export default function Hero({id}: HeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLandscape, setIsLandscape] = useState(true); // default true to avoid SSR flicker
+  const [isLandscape, setIsLandscape] = useState(false); // default true to avoid SSR flicker
 
   useEffect(() => {
     const handleResize = () => {
