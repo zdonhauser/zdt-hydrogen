@@ -83,10 +83,9 @@ export default function Calendar({
   }, [daysInMonth, firstWeekday]);
 
   return (
-    <>
+    <> {/*upcoming hours, summary only*/}
       {!showFull && (
-        <div className="w-full bg-[var(--color-brand-blue)] py-8 relative overflow-hidden">
-          {/* Feastables texture overlay */}
+        <div className="w-full bg-[var(--color-brand-blue)] py-8 relative overflow-hidden border-t-5 border-b-5 border-[var(--color-brand-dark)]">
           <div className="absolute inset-0 z-0 text-6xl md:text-8xl font-black text-[var(--color-brand-dark)] opacity-10 pointer-events-none flex flex-wrap">
             HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;
             URS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HO
@@ -95,7 +94,7 @@ export default function Calendar({
             URS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HO
             S&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOUR
           </div>
-          <div className="relative max-w-4xl mx-auto px-4 z-10">
+          <div className="relative px-4 z-10">
             <h3 className="text-xl font-bold mb-2 text-[var(--color-dark)]">
               Upcoming Hours
             </h3>
@@ -110,15 +109,15 @@ export default function Calendar({
                 return (
                   <div
                     key={d.toISOString()}
-                    className="flex-none w-24 p-2 bg-[var(--color-light)] rounded-lg shadow border-4 border-[var(--color-brand-dark)] text-center"
+                    className={`flex-none w-24 p-2  rounded-lg shadow border-4 border-[var(--color-brand-dark)] text-center ${parkHours === 'Closed' ? 'bg-[var(--color-light)]' : 'bg-[var(--color-light)]'}`}
                   >
                     <div className="font-bold">
                       {d.toLocaleDateString('default', {weekday: 'short'})}
                     </div>
-                    <div className="text-2xl">
+                    <div className="text-2xl font-light">
                       {d.getMonth() + 1}/{d.getDate()}
                     </div>
-                    <div className="text-md">{parkHours}</div>
+                    <div className={`text-md ${parkHours === 'Closed' ? 'font-light' : 'font-bold'}`}>{parkHours}</div>
                     {waterHours && (
                       <div className="text-xs text-blue-600">
                         Water:{waterHours}
@@ -184,7 +183,7 @@ export default function Calendar({
                   Next
                 </button>
               </div>
-              <div className="overflow-hidden rounded-lg shadow-sm">
+              <div className="overflow-hidden shadow-sm ">
                 <table className="w-full table-auto border-collapse text-center bg-[var(--color-light)]">
                   <thead>
                     <tr className="bg-[var(--color-brand-blue)] border-3 border-[var(--color-brand-dark)] text-[var(--color-dark)] font-bold">

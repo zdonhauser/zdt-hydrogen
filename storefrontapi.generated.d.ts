@@ -301,8 +301,46 @@ export type AttractionProductsQueryVariables = StorefrontAPI.Exact<{
 }>;
 
 export type AttractionProductsQuery = {
-  products: {
-    nodes: Array<Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle'>>;
+  collections: {
+    nodes: Array<{
+      products: {
+        nodes: Array<
+          Pick<
+            StorefrontAPI.Product,
+            'title' | 'id' | 'handle' | 'descriptionHtml'
+          > & {
+            images: {
+              nodes: Array<
+                Pick<
+                  StorefrontAPI.Image,
+                  'id' | 'url' | 'altText' | 'width' | 'height'
+                >
+              >;
+            };
+          }
+        >;
+      };
+    }>;
+  };
+};
+
+export type AdmissionProductsQueryVariables = StorefrontAPI.Exact<{
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+}>;
+
+export type AdmissionProductsQuery = {
+  collections: {
+    nodes: Array<{
+      products: {
+        nodes: Array<
+          Pick<
+            StorefrontAPI.Product,
+            'id' | 'title' | 'handle' | 'descriptionHtml'
+          >
+        >;
+      };
+    }>;
   };
 };
 
@@ -377,12 +415,12 @@ export type RecommendedProductsQuery = {
   };
 };
 
-export type AdmissionProductsQueryVariables = StorefrontAPI.Exact<{
+export type ProductsQueryVariables = StorefrontAPI.Exact<{
   country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
   language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
 }>;
 
-export type AdmissionProductsQuery = {
+export type ProductsQuery = {
   collections: {
     nodes: Array<{
       products: {
@@ -406,6 +444,28 @@ export type AdmissionProductsQuery = {
               >;
             };
           }
+        >;
+      };
+    }>;
+  };
+};
+
+export type CalendarHoursQueryVariables = StorefrontAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type CalendarHoursQuery = {
+  metaobjects: {
+    edges: Array<{
+      node: {
+        hours?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        water?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
+        >;
+        notes?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.MetaobjectField, 'value'>
         >;
       };
     }>;
@@ -1223,9 +1283,13 @@ interface GeneratedQueryTypes {
     return: StoreRobotsQuery;
     variables: StoreRobotsQueryVariables;
   };
-  '#graphql\n  query AttractionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    products(first: 100, sortKey: TITLE, reverse: false, query: "tag:attraction") {\n      nodes {\n        id\n        title\n        handle\n      }\n    }\n  }\n': {
+  '#graphql\n  query AttractionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 15) {\n          nodes {\n            title\n            id\n            handle\n            descriptionHtml\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: AttractionProductsQuery;
     variables: AttractionProductsQueryVariables;
+  };
+  '#graphql\n  query AdmissionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 10) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n          }\n        }\n      }\n    }\n  }\n': {
+    return: AdmissionProductsQuery;
+    variables: AdmissionProductsQueryVariables;
   };
   '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n  }\n': {
     return: FeaturedCollectionQuery;
@@ -1235,9 +1299,13 @@ interface GeneratedQueryTypes {
     return: RecommendedProductsQuery;
     variables: RecommendedProductsQueryVariables;
   };
-  '#graphql\n  query AdmissionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 100) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n            priceRange {\n              minVariantPrice {\n                amount\n                currencyCode\n              }\n            }\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
-    return: AdmissionProductsQuery;
-    variables: AdmissionProductsQueryVariables;
+  '#graphql\n  query Products($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 100) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n            priceRange {\n              minVariantPrice {\n                amount\n                currencyCode\n              }\n            }\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+    return: ProductsQuery;
+    variables: ProductsQueryVariables;
+  };
+  '#graphql\n  query CalendarHours {\n    metaobjects(type: "park_hours", first: 1) {\n      edges {\n        node {\n          hours: field(key: "hours") {\n            value\n          }\n          water: field(key: "water") {\n            value\n          }\n          notes: field(key: "notes") {\n            value\n          }\n        }\n      }\n    }\n  }\n': {
+    return: CalendarHoursQuery;
+    variables: CalendarHoursQueryVariables;
   };
   '#graphql\n  query Article(\n    $articleHandle: String!\n    $blogHandle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    blog(handle: $blogHandle) {\n      articleByHandle(handle: $articleHandle) {\n        title\n        contentHtml\n        publishedAt\n        author: authorV2 {\n          name\n        }\n        image {\n          id\n          altText\n          url\n          width\n          height\n        }\n        seo {\n          description\n          title\n        }\n      }\n    }\n  }\n': {
     return: ArticleQuery;

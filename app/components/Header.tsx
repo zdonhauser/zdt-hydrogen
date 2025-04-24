@@ -1,4 +1,4 @@
-import {Suspense, useState} from 'react';
+import {Suspense, useState, useEffect, useRef} from 'react';
 import {Await, NavLink, useAsyncValue} from '@remix-run/react';
 import {
   type CartViewPayload,
@@ -25,9 +25,31 @@ export function Header({
 }: HeaderProps) {
   const {menu} = header;
 
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-[var(--color-brand-yellow)] text-black border-b-4 border-black font-black tracking-wide shadow-[0_4px_0_rgba(0,0,0,0.6)] px-4 py-3 flex items-center justify-between">
+      <header
+        className={`sticky top-0 z-50 w-full bg-[var(--color-brand-yellow)] text-black border-b-4 border-black font-black tracking-wide shadow-[0_4px_0_rgba(0,0,0,0.6)] px-4 py-3 flex items-center justify-between transition-transform duration-300 ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
         <NavLink to="/" className="flex items-center">
           <img
             src="/logos/black.png"

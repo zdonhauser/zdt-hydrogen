@@ -14,43 +14,21 @@ import Calendar from '~/components/Calendar';
 export const meta: MetaFunction = () => {
   return [{title: 'ZDT’s Amusement Park'}];
 };
-//define hours type { "yy": { "m": {"d": "hours text"}}}
-interface HoursData {
-  [year: string]: {
-    [month: string]: {
-      [day: string]: string;
-    };
-  };
-}
 
-const HOURS_QUERY = `#graphql
-  query CalendarHours {
-    metaobjects(type: "park_hours", first: 1) {
-      edges {
-        node {
-          hours: field(key: "hours") {
-            value
-          }
-          water: field(key: "water") {
-            value
-          }
-          notes: field(key: "notes") {
-            value
-          }
-        }
-      }
-    }
-  }
-`;
 
 export async function loader(args: LoaderFunctionArgs) {
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
 
   const {context} = args;
-  const attractions = await context.storefront.query(ATTRACTION_PRODUCTS_QUERY);
-  const admissionCollection = await context.storefront.query(ADMISSION_PRODUCTS_QUERY);
-  const admissionProducts = admissionCollection.collections?.nodes[0].products?.nodes ?? [];
+  const attractionsCollection = await context.storefront.query(ATTRACTION_PRODUCTS_QUERY);
+  const attractions = attractionsCollection.collections?.nodes[0];
+  console.log(attractions);
+  const admissionCollection = await context.storefront.query(
+    ADMISSION_PRODUCTS_QUERY,
+  );
+  const admissionProducts =
+    admissionCollection.collections?.nodes[0].products?.nodes ?? [];
 
   const {metaobjects} = await context.storefront.query(HOURS_QUERY);
   const edge = metaobjects?.edges?.[0];
@@ -59,9 +37,15 @@ export async function loader(args: LoaderFunctionArgs) {
   const waterField = edge?.node?.water;
   const notesField = edge?.node?.notes;
 
-  const hoursData: HoursData = hoursField?.value ? JSON.parse(hoursField.value) : {};
-  const waterData: HoursData = waterField?.value ? JSON.parse(waterField.value) : {};
-  const notesData: HoursData = notesField?.value ? JSON.parse(notesField.value) : {};
+  const hoursData = hoursField?.value
+    ? JSON.parse(hoursField.value)
+    : {};
+  const waterData = waterField?.value
+    ? JSON.parse(waterField.value)
+    : {};
+  const notesData = notesField?.value
+    ? JSON.parse(notesField.value)
+    : {};
 
   return {
     ...deferredData,
@@ -98,7 +82,8 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 }
 
 export default function Homepage() {
-  const {attractions, admissionProducts, hoursData, waterData, notesData} = useLoaderData<typeof loader>();
+  const {attractions, admissionProducts, hoursData, waterData, notesData} =
+    useLoaderData<typeof loader>();
 
   return (
     <>
@@ -108,7 +93,12 @@ export default function Homepage() {
         handles={attractions.map((a: any) => a.handle)}
       />
       <Carousel products={admissionProducts} />
-      <Calendar hoursData={hoursData} waterData={waterData} notesData={notesData} />
+      <Calendar
+        hoursData={hoursData}
+        waterData={waterData}
+        notesData={notesData}
+      />
+      <Carousel products={attractions} />
       <div className="h-[20vh] bg-black" />
     </>
   );
@@ -180,15 +170,49 @@ function RecommendedProducts({
 const ATTRACTION_PRODUCTS_QUERY = `#graphql
   query AttractionProducts($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    products(first: 100, sortKey: TITLE, reverse: false, query: "tag:attraction") {
+    collections(first: 1, reverse: false, query: "Attractions") {
       nodes {
-        id
-        title
-        handle
+        products(first: 15) {
+          nodes {
+            title
+            id
+            handle
+            descriptionHtml
+            images(first: 1) {
+              nodes {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
+        }
       }
     }
   }
 `;
+
+const ADMISSION_PRODUCTS_QUERY = `#graphql
+  query AdmissionProducts($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    collections(first: 1, reverse: false, query: "Admission") {
+      nodes {
+        products(first: 10) {
+          nodes {
+            id
+            title
+            handle
+            descriptionHtml
+          }
+        }
+      }
+    }
+  }
+` as const;
+
+
 const FEATURED_COLLECTION_QUERY = `#graphql
   fragment FeaturedCollection on Collection {
     id
@@ -243,8 +267,9 @@ const RECOMMENDED_PRODUCTS_QUERY = `#graphql
   }
 ` as const;
 
-const ADMISSION_PRODUCTS_QUERY = `#graphql
-  query AdmissionProducts($country: CountryCode, $language: LanguageCode)
+
+const PRODUCTS_QUERY = `#graphql
+  query Products($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
     collections(first: 1, reverse: false, query: "Admission") {
       nodes {
@@ -275,3 +300,23 @@ const ADMISSION_PRODUCTS_QUERY = `#graphql
     }
   }
 ` as const;
+
+const HOURS_QUERY = `#graphql
+  query CalendarHours {
+    metaobjects(type: "park_hours", first: 1) {
+      edges {
+        node {
+          hours: field(key: "hours") {
+            value
+          }
+          water: field(key: "water") {
+            value
+          }
+          notes: field(key: "notes") {
+            value
+          }
+        }
+      }
+    }
+  }
+`;

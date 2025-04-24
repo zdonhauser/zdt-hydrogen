@@ -1,33 +1,5 @@
-import {Link} from '@remix-run/react';
+import {Product} from '@shopify/hydrogen/storefront-api-types';
 import React, {useRef, useEffect, useState} from 'react';
-
-interface Product {
-  id: string;
-  title: string;
-  priceRange: {
-    minVariantPrice: {amount: string; currencyCode: string};
-  };
-  descriptionHtml: string;
-  handle: string;
-  images: {
-    altText: string;
-    id: string;
-    previewImage: {
-      altText: string;
-      height: number;
-      width: number;
-      id: string;
-      transformed: {
-        altText: string;
-        height: number;
-        width: number;
-        id: string;
-        url: string;
-      };
-      url: string;
-    };
-  }[];
-}
 
 // cycle these through the top panels
 const BRAND_COLORS = [
@@ -41,43 +13,66 @@ const BRAND_COLORS = [
 export default function Carousel({products}: {products: Product[]}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [prevActiveIndex, setPrevActiveIndex] = useState(0);
   const timeoutRef = useRef<number>();
-  const [isMounted, setIsMounted] = useState(false);
-
-  const disableScrollToCenter = useRef(false);
-
+  const scrolling = useRef(false);
+  const isMounted = useRef(false);
   // 1) watch which card is most centered
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const items = Array.from(
-      container.querySelectorAll<HTMLElement>('[data-carousel-index]')
+      container.querySelectorAll<HTMLElement>('[data-carousel-index]'),
     );
 
-    // Determine whether we need to center items
-    // Disable centering only if the total scroll width is less than or equal to the client width
-    //disableScrollToCenter.current = container.scrollWidth <= container.clientWidth;
+    const visibleEntries = new Map<number, IntersectionObserverEntry>();
 
     const obs = new IntersectionObserver(
       (entries) => {
-        // find all currently intersecting, then pick the one whose center is
-        // closest to the container’s midpoint
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => {
-            const c = container.clientWidth / 2;
-            const aC =
-              a.boundingClientRect.left + a.boundingClientRect.width / 2;
-            const bC =
-              b.boundingClientRect.left + b.boundingClientRect.width / 2;
-            return Math.abs(aC - c) - Math.abs(bC - c);
-          });
-        if (!visible[0]) return;
-        const idx = Number(
-          visible[0].target.getAttribute('data-carousel-index'),
+        const containerCenter =
+          container.scrollLeft + container.clientWidth / 2;
+
+        entries.forEach((entry) => {
+          const indexAttr = entry.target.getAttribute('data-carousel-index');
+          if (!indexAttr) return;
+          const idx = Number(indexAttr);
+          if (entry.isIntersecting) {
+            visibleEntries.set(idx, entry);
+          } else {
+            visibleEntries.delete(idx);
+          }
+        });
+
+        const sortedVisible = Array.from(visibleEntries.entries())
+          .map(([idx, entry]) => {
+            const el = entry.target as HTMLElement;
+            const elCenter = el.offsetLeft + el.offsetWidth / 2;
+            const distance = Math.abs(elCenter - containerCenter);
+            return {idx, distance};
+          })
+          .sort((a, b) => a.distance - b.distance);
+
+        if (sortedVisible.length === 0) return;
+
+        console.log(
+          'number of visible items: ',
+          sortedVisible.length,
+          'visible item indices: ',
+          sortedVisible.map((v) => v.idx),
+          'distances: ',
+          sortedVisible.map((v) => v.distance),
         );
-        setActiveIndex(idx);
+
+        const closestIdx = sortedVisible[0].idx;
+        console.log('closest index: ', closestIdx);
+
+        if (scrolling.current) {
+          console.log('skipping centerline scroll');
+          return;
+        }
+        console.log('setting active index to centerline index ', closestIdx);
+        setActiveIndex(closestIdx);
       },
       {root: container, threshold: 0.6},
     );
@@ -88,127 +83,186 @@ export default function Carousel({products}: {products: Product[]}) {
 
   // 2) whenever activeIndex changes, smooth-scroll it into center
   useEffect(() => {
-    //if (disableScrollToCenter.current) return;
+    console.log('active index changed to', activeIndex);
     window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
+      if (scrolling.current) {
+        console.log('skipping scroll');
+        return;
+      }
+      console.log('scrolling to', activeIndex);
+      scrolling.current = true;
+      setTimeout(
+        () => {
+          scrolling.current = false;
+        },
+        Math.min(300 * Math.abs(activeIndex - prevActiveIndex), 300),
+      );
+      setPrevActiveIndex(activeIndex);
       const container = containerRef.current;
       const el = container?.querySelector<HTMLElement>(
         `[data-carousel-index="${activeIndex}"]`,
       );
-      if (!isMounted) return;
+      if (!isMounted.current) {
+        isMounted.current = true;
+        return;
+      }
       el?.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
         block: 'center',
       });
-      setIsMounted(true);
     }, 100);
   }, [activeIndex]);
-  
+
   const handleClick = (index: number, href: string) => {
-    if (index === activeIndex) {
-      window.location.href = href; // or use `navigate()` if using router
+    if (index === activeIndex && !scrolling.current) {
+      window.location.href = href;
     } else {
+      console.log('click on index', index);
       setActiveIndex(index);
+    }
+  };
+
+  const scrollLeft = () => {
+    if (activeIndex > 0) {
+      setActiveIndex(activeIndex - 1);
+    }
+  };
+
+  const scrollRight = () => {
+    if (activeIndex < products.length - 1) {
+      setActiveIndex(activeIndex + 1);
     }
   };
 
   return (
     <div className="relative w-full bg-[var(--color-brand-cream)] overflow-hidden">
-      <div
-        ref={containerRef}
-        className="
-          flex gap-4
-          overflow-x-auto snap-x snap-mandatory
-          scroll-smooth scrollbar-hide
-        "
-        style={{
-          paddingTop: '4rem',
-          paddingBottom: '4rem',
-          paddingInline: 'max(1rem, calc(50vw - 180px))',
-        }}
-      >
-        {products.map((product, i) => {
-          const isActive = i === activeIndex;
-          const bgColor = BRAND_COLORS[i % BRAND_COLORS.length];
-          const width = isActive
-            ? `clamp(280px,25vw,360px)`
-            : `clamp(200px,18vw,280px)`;
-          const height = isActive
-            ? `clamp(460px,32vw,580px)`
-            : `clamp(300px,24vw,460px)`;
+      <div className="relative">
+        <button
+          className="absolute top-1/2 -translate-y-1/2 left-2 bg-black bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition hidden md:block"
+          onClick={scrollLeft}
+          aria-label="Scroll left"
+        >
+          ‹
+        </button>
+        <div
+          ref={containerRef}
+          className="
+            flex gap-4
+            overflow-x-auto snap-x snap-mandatory
+            scroll-smooth scrollbar-hide
+          "
+          style={{
+            paddingTop: '4rem',
+            paddingBottom: '4rem',
+            paddingInline: 'max(1rem, calc(50vw - 180px))',
+          }}
+        >
+          {products.map((product, i) => {
+            const isActive = i === activeIndex;
+            const width = isActive
+              ? `clamp(280px,25vw,360px)`
+              : `clamp(200px,18vw,280px)`;
+            const height = isActive
+              ? `clamp(460px,32vw,580px)`
+              : `clamp(300px,24vw,460px)`;
 
-          return (
-            <button
-              key={product.id}
-              onClick={() => handleClick(i, `/products/${product.handle}`)}
-              data-carousel-index={i}
-              className={`
-                shrink-0 snap-center
-                transition-transform duration-300 ease-in-out
-                transform-gpu
-                ${isActive ? 'scale-110 z-10 ' : 'scale-95 opacity-70'}
-              `}
-              style={{
-                width,
-                height,
-                transformOrigin: 'center',
-                //pointerEvents: isActive ? undefined : 'none',
-              }}
-            >
-              <div className="h-full rounded-xl shadow-lg overflow-hidden bg-[var(--color-light)] border-[var(--color-dark)] border-4">
-                {/* top colored panel */}
-                <div
-                  className="flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full"
-                  style={{
-                    backgroundColor: bgColor,
-                    height: isActive ? '40%' : '50%',
-                  }}
-                >
-                  <img
-                    src="/logos/black.png"
-                    alt="ZDT's Logo"
-                    className="w-50"
-                  />
-                  <h3
-                    className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}
+            const image = product.images?.nodes[0]?.url || null;
+
+            return (
+              <button
+                key={product.id}
+                onClick={() => handleClick(i, `/products/${product.handle}`)}
+                data-carousel-index={i}
+                className={`
+                  shrink-0 snap-center
+                  transition-transform duration-300 ease-in-out
+                  transform-gpu
+                  ${isActive ? 'scale-110 z-10 ' : 'scale-95 opacity-70'}
+                `}
+                style={{
+                  width,
+                  height,
+                  transformOrigin: 'center',
+                  //pointerEvents: isActive ? undefined : 'none',
+                }}
+              >
+                <div className="h-full rounded-xl shadow-lg overflow-hidden bg-[var(--color-light)] border-[var(--color-dark)] border-4">
+                  {/* top colored panel */}
+                  <div
+                    className={`flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full`}
+                    style={{
+                      height: isActive ? '40%' : '50%',
+                      backgroundImage: image ? `url(${image})` : undefined,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundColor: image ? undefined : BRAND_COLORS[i % BRAND_COLORS.length],
+                    }}
                   >
-                    {product.title}
-                  </h3>
-                </div>
-                {/* bottom white panel */}
-                <div className="p-4 bg-[var(--color-light)] h-[55%]">
-                  <div className="relative h-full">
-                    <div
-                      className="prose max-w-none h-full overflow-hidden"
-                      dangerouslySetInnerHTML={{
-                        __html: product.descriptionHtml,
-                      }}
-                    />
+                    {!image && (
+                      <>
+                        <img
+                          src="/logos/black.png"
+                          alt="ZDT's Logo"
+                          className="w-50"
+                        />
+                        <p
+                          className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}
+                        >
+                          {product.title}
+                        </p>
+                      </>
+                    )}
+                    {image && (
+                      <h3
+                        className="text-[var(--color-light)] text-center h-full flex items-end justify-end drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]"
+                      >
+                        {product.title}
+                      </h3>
+                    )}
+                  </div>
+                  {/* bottom white panel */}
+                  <div className="p-4 bg-[var(--color-light)] h-[55%]">
+                    <div className="relative h-full">
+                        <div
+                          className="prose max-w-none h-full overflow-hidden"
+                          dangerouslySetInnerHTML={{
+                            __html: product.descriptionHtml,
+                          }}
+                        />
 
-                    {/* fade‐out gradient */}
-                    <div
-                      className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
-                      style={{
-                        background:
-                          'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
-                      }}
-                    />
+                      {/* fade‐out gradient */}
+                      <div
+                        className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
+                        style={{
+                          background:
+                            'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                        }}
+                      />
 
-                    {/* ellipsis indicator */}
-                    <br />
-                    <span
-                      className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
-                      aria-hidden="true"
-                    >
-                      …
-                    </span>
+                      {/* ellipsis indicator */}
+                      <br />
+                      <span
+                        className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
+                        aria-hidden="true"
+                      >
+                        …
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          className="absolute top-1/2 -translate-y-1/2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition hidden md:block"
+          onClick={scrollRight}
+          aria-label="Scroll right"
+        >
+          ›
+        </button>
       </div>
     </div>
   );
