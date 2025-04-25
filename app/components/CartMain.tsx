@@ -31,7 +31,7 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
   return (
     <div className={className}>
       <CartEmpty hidden={linesCount} layout={layout} />
-      <div className="cart-details">
+      <div className="cart-details" hidden={!linesCount}>
         <div aria-labelledby="cart-lines">
           <ul>
             {(cart?.lines?.nodes ?? []).map((line) => (
@@ -53,16 +53,19 @@ function CartEmpty({
 }) {
   const {close} = useAside();
   return (
-    <div hidden={hidden}>
-      <br />
-      <p>
-        Looks like you haven&rsquo;t added anything yet, let&rsquo;s get you
-        started!
+    <div
+      hidden={hidden}
+      className="text-center mt-10 bg-white border border-black rounded shadow-md p-8"
+    >
+      <p className="text-xl font-semibold text-black mb-4">
+        Looks like you haven&rsquo;t added anything yet, let&rsquo;s get you started!
       </p>
-      <br />
-      <Link to="/collections" onClick={close} prefetch="viewport">
+      <button
+        onClick={close}
+        className="inline-block bg-yellow-400 text-black font-bold px-6 py-3 rounded border border-black shadow hover:bg-yellow-300 transition"
+      >
         Continue shopping →
-      </Link>
+      </button>
     </div>
   );
 }

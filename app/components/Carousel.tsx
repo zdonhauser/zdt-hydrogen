@@ -180,7 +180,7 @@ export default function Carousel({products}: {products: ProductNode[]}) {
             return (
               <button
                 key={product.id}
-                onClick={() => handleClick(i, `/products/${product.handle}`)}
+                onMouseDown={() => handleClick(i, `/products/${product.handle}`)}
                 data-carousel-index={i}
                 className={`
                   shrink-0 snap-center

@@ -154,6 +154,9 @@ export default function Hero({id}: HeroProps) {
           </p>
           <Link
             to="/products/unlimitedwristband"
+            onMouseDown={(e) => {
+              e.currentTarget.click();
+            }}
             className="mt-6 bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-black font-black py-3 px-8 rounded-full text-lg shadow-[0_3px_0_rgba(0,0,0,0.8)] transition-all duration-150 uppercase tracking-wider"
           >
             TICKETS

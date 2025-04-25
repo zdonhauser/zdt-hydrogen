@@ -1,7 +1,7 @@
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import type {CartLayout} from '~/components/CartMain';
 import {CartForm, Money, type OptimisticCart} from '@shopify/hydrogen';
-import {useRef} from 'react';
+import {useMemo, useRef} from 'react';
 import {FetcherWithComponents} from '@remix-run/react';
 
 type CartSummaryProps = {
@@ -10,13 +10,24 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
-  const className =
-    layout === 'page' ? 'cart-summary-page' : 'cart-summary-aside';
+  const className = "bg-white p-6 border border-black rounded shadow mt-6";
+
+  const estimatedTaxRate = 0.0825; // 8.25% for Texas
+  const estimatedTax = useMemo(() => {
+    const total = parseFloat(cart.cost?.totalAmount?.amount || '0');
+    return total * estimatedTaxRate;
+  }, [cart.cost?.totalAmount?.amount]);
+
+  const estimatedDiscounts = useMemo(() => {
+    const subtotal = parseFloat(cart.cost?.subtotalAmount?.amount || '0');
+    const total = parseFloat(cart.cost?.totalAmount?.amount || '0');
+    return subtotal - total;
+  }, [cart.cost?.subtotalAmount?.amount, cart.cost?.totalAmount?.amount]);
 
   return (
     <div aria-labelledby="cart-summary" className={className}>
-      <h4>Totals</h4>
-      <dl className="cart-subtotal">
+      <h4 className="text-xl font-bold mb-4">Totals</h4>
+      <dl className="flex justify-between pt-2 text-lg font-semibold">
         <dt>Subtotal</dt>
         <dd>
           {cart.cost?.subtotalAmount?.amount ? (
@@ -26,9 +37,30 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
           )}
         </dd>
       </dl>
+      {/* Discount totals */}
+      {estimatedDiscounts > 0 && (
+        <dl className="flex justify-between  pt-2 text-lg font-semibold">
+          <dt>Discount</dt>
+          <dd>{`($${estimatedDiscounts.toFixed(2)})`}</dd>
+        </dl>
+      )}
+      {estimatedTax > 0 && (
+        <dl className="flex justify-between  pt-2 text-lg font-semibold">
+          <dt>Estimated Tax</dt>
+          <dd>${estimatedTax.toFixed(2)}</dd>
+        </dl>
+      )}
+      <dl className="flex justify-between pt-2 text-lg font-semibold">
+        <dt>Total</dt>
+        <dd>
+          ${(Number(cart.cost?.totalAmount?.amount) + estimatedTax).toFixed(2)}
+        </dd>
+      </dl>
       <CartDiscounts discountCodes={cart.discountCodes} />
       <CartGiftCard giftCardCodes={cart.appliedGiftCards} />
       <CartCheckoutActions checkoutUrl={cart.checkoutUrl} />
+      <br />
+
     </div>
   );
 }
@@ -37,8 +69,12 @@ function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
 
   return (
     <div>
-      <a href={checkoutUrl} target="_self">
-        <p>Continue to Checkout &rarr;</p>
+      <a
+        href={checkoutUrl}
+        target="_self"
+        className="inline-block w-full text-right mt-4 bg-[var(--color-brand-yellow)] text-black font-bold px-6 py-3 rounded border border-black shadow hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition"
+      >
+        Continue to Checkout →
       </a>
       <br />
     </div>
@@ -62,10 +98,10 @@ function CartDiscounts({
         <div>
           <dt>Discount(s)</dt>
           <UpdateDiscountForm>
-            <div className="cart-discount">
-              <code>{codes?.join(', ')}</code>
-              &nbsp;
-              <button>Remove</button>
+            <div className="flex items-center gap-2 mt-2 bg-yellow-100 border border-black rounded px-4 py-2">
+              <code className="text-black font-mono">{codes?.join(', ')}</code>
+              <button className="text-red-600 font-bold hover:underline text-right">Remove</button>
+              {/*discount amount*/}
             </div>
           </UpdateDiscountForm>
         </div>
@@ -73,10 +109,19 @@ function CartDiscounts({
 
       {/* Show an input to apply a discount */}
       <UpdateDiscountForm discountCodes={codes}>
-        <div>
-          <input type="text" name="discountCode" placeholder="Discount code" />
-          &nbsp;
-          <button type="submit">Apply</button>
+        <div className="flex mt-2 gap-2">
+          <input
+            type="text"
+            name="discountCode"
+            placeholder="Discount code"
+            className="border border-black rounded px-3 py-2 flex-grow w-3/4"
+          />
+          <button
+            type="submit"
+            className="bg-[var(--color-brand-yellow)] text-black font-bold w-1/4 px-4 py-2 rounded border border-black shadow hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition"
+          >
+            Apply
+          </button>
         </div>
       </UpdateDiscountForm>
     </div>
@@ -132,10 +177,10 @@ function CartGiftCard({
         <div>
           <dt>Applied Gift Card(s)</dt>
           <UpdateGiftCardForm>
-            <div className="cart-discount">
-              <code>{codes?.join(', ')}</code>
+            <div className="flex items-center gap-2 mt-2 bg-yellow-100 border border-black rounded px-4 py-2">
+              <code className="text-black font-mono">{codes?.join(', ')}</code>
               &nbsp;
-              <button onSubmit={() => removeAppliedCode}>Remove</button>
+              <button className="text-red-600 font-bold hover:underline" onSubmit={() => removeAppliedCode}>Remove</button>
             </div>
           </UpdateGiftCardForm>
         </div>
@@ -146,15 +191,20 @@ function CartGiftCard({
         giftCardCodes={appliedGiftCardCodes.current}
         saveAppliedCode={saveAppliedCode}
       >
-        <div>
+        <div className="flex mt-2 gap-2">
           <input
             type="text"
             name="giftCardCode"
             placeholder="Gift card code"
             ref={giftCardCodeInput}
+            className="border border-black rounded px-3 py-2 flex-grow w-3/4"
           />
-          &nbsp;
-          <button type="submit">Apply</button>
+          <button
+            type="submit"
+            className="bg-[var(--color-brand-yellow)] text-black font-bold w-1/4 px-4 py-2 rounded border border-black shadow hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition"
+          >
+            Apply
+          </button>
         </div>
       </UpdateGiftCardForm>
     </div>

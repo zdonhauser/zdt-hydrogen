@@ -79,41 +79,61 @@ export default function Product() {
 
   const {title, descriptionHtml} = product;
 
+  const availableForPurchase = !product.tags.includes('attraction');
+
   return (
     <div className="w-full px-4 py-12 md:py-20 bg-yellow-50 text-black font-sans">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        <div className="w-full">
-        <ProductImage image={selectedVariant?.image} />
-        </div>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        {availableForPurchase && (
+          <>
+            <div className="w-full">
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
+                {title}
+              </h1>
+              <ProductImage image={selectedVariant?.image} />
+              <div
+                className="prose max-w-none text-lg leading-relaxed"
+                dangerouslySetInnerHTML={{__html: descriptionHtml}}
+              />
+            </div>
+            <div className="flex flex-col justify-start gap-6 p-4">
+              {/*
+              <div className="bg-yellow-300 text-black text-xl font-extrabold px-4 py-2 rounded shadow-md w-fit">
+                <ProductPrice
+                  price={selectedVariant?.price}
+                  compareAtPrice={selectedVariant?.compareAtPrice}
+                />
+              </div>
+              */}
 
-        <div className="flex flex-col justify-start gap-6">
-          <span className="inline-block bg-black text-yellow-400 text-sm uppercase tracking-wide px-4 py-1 rounded-full w-fit animate-pulse shadow-lg">
-            Featured Attraction
-          </span>
+              <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
+                <ProductForm
+                  productOptions={productOptions}
+                  selectedVariant={selectedVariant}
+                  tags={product.tags}
+                />
+              </div>
 
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
-            {title}
-          </h1>
-
-          <div className="bg-yellow-300 text-black text-xl font-extrabold px-4 py-2 rounded shadow-md w-fit">
-            <ProductPrice
-              price={selectedVariant?.price}
-              compareAtPrice={selectedVariant?.compareAtPrice}
-            />
-          </div>
-
-          <div className="bg-white border border-black rounded-lg p-6 shadow-xl">
-            <ProductForm
-              productOptions={productOptions}
-              selectedVariant={selectedVariant}
-            />
-          </div>
-
-          <div
-            className="prose max-w-none text-lg leading-relaxed"
-            dangerouslySetInnerHTML={{__html: descriptionHtml}}
-          />
-        </div>
+              
+            </div>
+          </>
+        )}
+        {!availableForPurchase && (
+          <>
+            <div className="w-full">
+              <ProductImage image={selectedVariant?.image} />
+            </div>
+            <div className="flex flex-col justify-start gap-6">
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
+                {title}
+              </h1>
+              <div
+                className="prose max-w-none text-lg leading-relaxed"
+                dangerouslySetInnerHTML={{__html: descriptionHtml}}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <Analytics.ProductView
@@ -175,6 +195,7 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
 const PRODUCT_FRAGMENT = `#graphql
   fragment Product on Product {
     id
+    tags
     title
     vendor
     handle

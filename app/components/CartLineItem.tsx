@@ -26,19 +26,19 @@ export function CartLineItem({
   const {close} = useAside();
 
   return (
-    <li key={id} className="cart-line">
+    <li key={id} className="cart-line flex gap-4 border-b border-black py-4">
       {image && (
-        <Image
-          alt={title}
-          aspectRatio="1/1"
-          data={image}
-          height={100}
-          loading="lazy"
-          width={100}
-        />
+        <div className="w-1/2">
+          <Image
+            alt={title}
+            data={image}
+            loading="lazy"
+            sizes="(max-width: 50px) 50px, 50px"
+          />
+        </div>
       )}
 
-      <div>
+      <div className="w-1/2">
         <Link
           prefetch="intent"
           to={lineItemUrl}
@@ -52,7 +52,8 @@ export function CartLineItem({
             <strong>{product.title}</strong>
           </p>
         </Link>
-        <ProductPrice price={line?.cost?.totalAmount} />
+      
+        <ProductPrice price={line?.cost?.amountPerQuantity} compareAtPrice={line?.cost?.compareAtAmountPerQuantity} />
         <ul>
           {selectedOptions.map((option) => (
             <li key={option.name}>
@@ -62,7 +63,9 @@ export function CartLineItem({
             </li>
           ))}
         </ul>
-        <CartLineQuantity line={line} />
+        <div className="mt-2 flex items-center gap-2">
+          <CartLineQuantity line={line} />
+        </div>
       </div>
     </li>
   );
@@ -80,31 +83,37 @@ function CartLineQuantity({line}: {line: CartLine}) {
   const nextQuantity = Number((quantity + 1).toFixed(0));
 
   return (
-    <div className="cart-line-quantity">
-      <small>Quantity: {quantity} &nbsp;&nbsp;</small>
-      <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
-        <button
-          aria-label="Decrease quantity"
-          disabled={quantity <= 1 || !!isOptimistic}
-          name="decrease-quantity"
-          value={prevQuantity}
-        >
-          <span>&#8722; </span>
-        </button>
-      </CartLineUpdateButton>
-      &nbsp;
-      <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
-        <button
-          aria-label="Increase quantity"
-          name="increase-quantity"
-          value={nextQuantity}
-          disabled={!!isOptimistic}
-        >
-          <span>&#43;</span>
-        </button>
-      </CartLineUpdateButton>
-      &nbsp;
-      <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center border border-black rounded bg-white">
+        <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
+          <button
+            type="submit"
+            className="px-3 py-2 text-xl font-bold text-black hover:bg-yellow-200"
+            disabled={quantity <= 1 || !!isOptimistic}
+            name="decrease-quantity"
+            value={prevQuantity}
+            aria-label="Decrease quantity"
+          >
+            −
+          </button>
+        </CartLineUpdateButton>
+        <span className="px-3 py-2 font-bold">{quantity}</span>
+        <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
+          <button
+            type="submit"
+            className="px-3 py-2 text-xl font-bold text-black hover:bg-yellow-200"
+            disabled={!!isOptimistic}
+            name="increase-quantity"
+            value={nextQuantity}
+            aria-label="Increase quantity"
+          >
+            +
+          </button>
+        </CartLineUpdateButton>
+      </div>
+      <div>
+        <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
+      </div>
     </div>
   );
 }

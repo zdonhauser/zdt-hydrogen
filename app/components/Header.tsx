@@ -61,12 +61,18 @@ export function Header({
         <HeaderMenuMobileToggle />
 
         {/* Desktop menu */}
+
+        <div className="flex items-center justify-end gap-4">
         <HeaderMenu
           menu={menu}
           viewport="desktop"
           primaryDomainUrl={header.shop.primaryDomain.url}
           publicStoreDomain={publicStoreDomain}
         />
+          <div className="hidden md:block">
+            <CartToggle cart={cart} />
+          </div>
+        </div>
       </header>
 
       {/* Mobile menu inside Aside */}
@@ -94,13 +100,20 @@ export function HeaderMenu({
   publicStoreDomain: HeaderProps['publicStoreDomain'];
 }) {
   const {close} = useAside();
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
-
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
+    {},
+  );
   const toggleExpand = (id: string) => {
-    setExpandedMenus((prev: Record<string, boolean>) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    //check if this menu is already expanded
+    const isExpanded = expandedMenus[id];
+    if (isExpanded) {
+      setExpandedMenus({});
+      return;
+    } else {
+      setExpandedMenus((prev) => ({
+        [id]: true,
+      }));
+    }
   };
 
   const baseStyles =
@@ -126,7 +139,7 @@ export function HeaderMenu({
             : item.url;
 
         return (
-          <div key={item.id} className="flex flex-col gap-2">
+          <div key={item.id} className="relative flex flex-col gap-2">
             {hasChildren ? (
               <>
                 <button
@@ -138,7 +151,10 @@ export function HeaderMenu({
                   <span>{isExpanded ? '▲' : '▼'}</span>
                 </button>
                 {isExpanded && (
-                  <ul className="ml-4 mt-1 flex flex-col gap-1">
+                  <ul
+                    className="absolute right-0 top-10 ml-2 bg-white border-4 border-black shadow-lg p-4 flex flex-col gap-2 z-50 w-max"
+                    onMouseLeave={() => toggleExpand(item.id)}
+                  >
                     {item.items.map((sub) => {
                       const subUrl =
                         sub.url?.includes('myshopify.com') ||
@@ -151,8 +167,12 @@ export function HeaderMenu({
                         <li key={sub.id}>
                           <NavLink
                             to={subUrl || ''}
-                            onClick={close}
-                            className="text-base hover:text-red-600 transition-colors"
+                            onMouseDown={(e) => {
+                              toggleExpand(item.id);
+                              e.currentTarget.click();
+                              close();
+                            }}
+                            className="text-base hover:text-red-600 transition-colors w-full"
                           >
                             {sub.title}
                           </NavLink>
@@ -179,12 +199,11 @@ export function HeaderMenu({
   );
 }
 
-
 function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <button
-      className="bg-black text-[var(--color-brand-yellow)] px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition-all md:hidden"
+      className="ml-auto bg-black text-[var(--color-brand-yellow)] px-4 py-2 rounded-full shadow-[0_3px_0_rgba(0,0,0,0.6)] hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition-all md:hidden"
       onClick={() => open('mobile')}
     >
       ☰
@@ -208,6 +227,10 @@ function activeLinkStyle({
 function CartBadge({count}: {count: number | null}) {
   const {open} = useAside();
   const {publish, shop, cart, prevCart} = useAnalytics();
+
+  if(!count || count === 0) {
+    return null;
+  }
 
   return (
     <a

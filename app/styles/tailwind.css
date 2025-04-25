@@ -19,3 +19,5 @@
     animation: scroll-ribbon linear infinite;
   }
 }
+
+@plugin 'tailwind-scrollbar';
