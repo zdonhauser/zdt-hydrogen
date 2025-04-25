@@ -50,6 +50,7 @@ export function PageLayout({
         footer={footer}
         header={header}
         publicStoreDomain={publicStoreDomain}
+        isLoggedIn={isLoggedIn}
       />
     </Aside.Provider>
   );

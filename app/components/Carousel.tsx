@@ -1,5 +1,12 @@
 import {Product} from '@shopify/hydrogen/storefront-api-types';
 import React, {useRef, useEffect, useState} from 'react';
+import type { AttractionProductsQuery } from 'storefrontapi.generated';
+
+
+type ProductNode = NonNullable<
+  AttractionProductsQuery['collections']
+>['nodes'][0]['products']['nodes'][0];
+
 
 // cycle these through the top panels
 const BRAND_COLORS = [
@@ -10,7 +17,7 @@ const BRAND_COLORS = [
   'var(--color-brand-pink)',
 ];
 
-export default function Carousel({products}: {products: Product[]}) {
+export default function Carousel({products}: {products: ProductNode[]}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevActiveIndex, setPrevActiveIndex] = useState(0);

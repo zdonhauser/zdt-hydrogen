@@ -118,7 +118,7 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
     .query(FOOTER_QUERY, {
       cache: storefront.CacheLong(),
       variables: {
-        footerMenuHandle: 'footer', // Adjust to your footer menu handle
+        footerMenuHandle: 'footer-navigation-menu', // Adjust to your footer menu handle
       },
     })
     .catch((error) => {
@@ -126,6 +126,7 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
       console.error(error);
       return null;
     });
+
   return {
     cart: cart.get(),
     isLoggedIn: customerAccount.isLoggedIn(),

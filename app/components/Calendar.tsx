@@ -1,22 +1,21 @@
 import {useState, useMemo} from 'react';
 
-//define hours type { "yy": { "m": {"d": "hours text"}}}
-interface HoursData {
+type CalendarData = {
   [year: string]: {
     [month: string]: {
-      [day: string]: string;
+      [day: string]: string | null;
     };
   };
-}
+};
 
 export default function Calendar({
   hoursData,
   waterData,
   notesData,
 }: {
-  hoursData: HoursData;
-  waterData: HoursData;
-  notesData: HoursData;
+  hoursData: CalendarData;
+  waterData: CalendarData;
+  notesData: CalendarData;
 }) {
   const today = useMemo(() => new Date(), []);
   const months = useMemo(() => {
@@ -103,7 +102,7 @@ export default function Calendar({
                 const yy = d.getFullYear().toString().slice(-2);
                 const m = d.getMonth().toString();
                 const dd = d.getDate().toString();
-                const parkHours = hoursData[yy]?.[m]?.[dd] || 'Closed';
+                const parkHours : string = hoursData[yy]?.[m]?.[dd] || 'Closed';
                 const waterHours = waterData[yy]?.[m]?.[dd];
                 const note = notesData[yy]?.[m]?.[dd] || '';
                 return (

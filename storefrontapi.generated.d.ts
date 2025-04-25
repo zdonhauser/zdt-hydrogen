@@ -1283,7 +1283,7 @@ interface GeneratedQueryTypes {
     return: StoreRobotsQuery;
     variables: StoreRobotsQueryVariables;
   };
-  '#graphql\n  query AttractionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 15) {\n          nodes {\n            title\n            id\n            handle\n            descriptionHtml\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query AttractionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Attractions") {\n      nodes {\n        products(first: 15) {\n          nodes {\n            title\n            id\n            handle\n            descriptionHtml\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
     return: AttractionProductsQuery;
     variables: AttractionProductsQueryVariables;
   };

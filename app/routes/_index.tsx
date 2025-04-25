@@ -1,32 +1,27 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import {Await, useLoaderData, Link, type MetaFunction} from '@remix-run/react';
-import {Suspense, useEffect, useRef, useState} from 'react';
-import {Image, Money} from '@shopify/hydrogen';
-import type {
-  FeaturedCollectionFragment,
-  RecommendedProductsQuery,
-} from 'storefrontapi.generated';
+import {useLoaderData, type MetaFunction} from '@remix-run/react';
 import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
 import Calendar from '~/components/Calendar';
+import {AttractionProductsQuery} from 'storefrontapi.generated';
 
 export const meta: MetaFunction = () => {
   return [{title: 'ZDT’s Amusement Park'}];
 };
-
 
 export async function loader(args: LoaderFunctionArgs) {
   const deferredData = loadDeferredData(args);
   const criticalData = await loadCriticalData(args);
 
   const {context} = args;
-  const attractionsCollection = await context.storefront.query(ATTRACTION_PRODUCTS_QUERY);
+  const attractionsCollection = await context.storefront.query(
+    ATTRACTION_PRODUCTS_QUERY,
+  );
   const attractions = attractionsCollection.collections?.nodes[0];
   console.log(attractions);
-  const admissionCollection = await context.storefront.query(
-    ADMISSION_PRODUCTS_QUERY,
-  );
+  const admissionCollection: AttractionProductsQuery =
+    await context.storefront.query(ADMISSION_PRODUCTS_QUERY);
   const admissionProducts =
     admissionCollection.collections?.nodes[0].products?.nodes ?? [];
 
@@ -37,14 +32,22 @@ export async function loader(args: LoaderFunctionArgs) {
   const waterField = edge?.node?.water;
   const notesField = edge?.node?.notes;
 
-  const hoursData = hoursField?.value
-    ? JSON.parse(hoursField.value)
+  type CalendarData = {
+    [year: string]: {
+      [month: string]: {
+        [day: string]: string | null;
+      };
+    };
+  };
+
+  const hoursData: CalendarData = hoursField?.value
+    ? (JSON.parse(hoursField.value as string) as CalendarData)
     : {};
-  const waterData = waterField?.value
-    ? JSON.parse(waterField.value)
+  const waterData: CalendarData = waterField?.value
+    ? (JSON.parse(waterField.value as string) as CalendarData)
     : {};
-  const notesData = notesField?.value
-    ? JSON.parse(notesField.value)
+  const notesData: CalendarData = notesField?.value
+    ? (JSON.parse(notesField.value as string) as CalendarData)
     : {};
 
   return {
@@ -99,7 +102,6 @@ export default function Homepage() {
         notesData={notesData}
       />
       <Carousel products={attractions} />
-      <div className="h-[20vh] bg-black" />
     </>
   );
 }
@@ -212,7 +214,6 @@ const ADMISSION_PRODUCTS_QUERY = `#graphql
   }
 ` as const;
 
-
 const FEATURED_COLLECTION_QUERY = `#graphql
   fragment FeaturedCollection on Collection {
     id
@@ -266,7 +267,6 @@ const RECOMMENDED_PRODUCTS_QUERY = `#graphql
     }
   }
 ` as const;
-
 
 const PRODUCTS_QUERY = `#graphql
   query Products($country: CountryCode, $language: LanguageCode)
