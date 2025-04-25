@@ -10,7 +10,7 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
-  const className = "bg-white p-6 border border-black rounded shadow mt-6";
+  const className = 'bg-white p-6 border border-black rounded shadow mt-6';
 
   const estimatedTaxRate = 0.0825; // 8.25% for Texas
   const estimatedTax = useMemo(() => {
@@ -38,29 +38,31 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
         </dd>
       </dl>
       {/* Discount totals */}
-      {estimatedDiscounts > 0 && (
+      {estimatedDiscounts > 0 && !isNaN(estimatedDiscounts) && (
         <dl className="flex justify-between  pt-2 text-lg font-semibold">
           <dt>Discount</dt>
           <dd>{`($${estimatedDiscounts.toFixed(2)})`}</dd>
         </dl>
       )}
-      {estimatedTax > 0 && (
+      {estimatedTax > 0 && !isNaN(estimatedTax) && (
         <dl className="flex justify-between  pt-2 text-lg font-semibold">
           <dt>Estimated Tax</dt>
           <dd>${estimatedTax.toFixed(2)}</dd>
         </dl>
       )}
-      <dl className="flex justify-between pt-2 text-lg font-semibold">
-        <dt>Total</dt>
-        <dd>
-          ${(Number(cart.cost?.totalAmount?.amount) + estimatedTax).toFixed(2)}
-        </dd>
-      </dl>
+      {!isNaN(Number(cart.cost?.totalAmount?.amount)) &&
+        !isNaN(estimatedTax) && (
+          <dl className="flex justify-between pt-2 text-lg font-semibold">
+            <dt>Total</dt>
+            <dd>
+              ${(Number(cart.cost?.totalAmount?.amount) + estimatedTax).toFixed(2)}
+            </dd>
+          </dl>
+        )}
       <CartDiscounts discountCodes={cart.discountCodes} />
       <CartGiftCard giftCardCodes={cart.appliedGiftCards} />
       <CartCheckoutActions checkoutUrl={cart.checkoutUrl} />
       <br />
-
     </div>
   );
 }
@@ -100,7 +102,9 @@ function CartDiscounts({
           <UpdateDiscountForm>
             <div className="flex items-center gap-2 mt-2 bg-yellow-100 border border-black rounded px-4 py-2">
               <code className="text-black font-mono">{codes?.join(', ')}</code>
-              <button className="text-red-600 font-bold hover:underline text-right">Remove</button>
+              <button className="text-red-600 font-bold hover:underline text-right">
+                Remove
+              </button>
               {/*discount amount*/}
             </div>
           </UpdateDiscountForm>
@@ -180,7 +184,12 @@ function CartGiftCard({
             <div className="flex items-center gap-2 mt-2 bg-yellow-100 border border-black rounded px-4 py-2">
               <code className="text-black font-mono">{codes?.join(', ')}</code>
               &nbsp;
-              <button className="text-red-600 font-bold hover:underline" onSubmit={() => removeAppliedCode}>Remove</button>
+              <button
+                className="text-red-600 font-bold hover:underline"
+                onSubmit={() => removeAppliedCode}
+              >
+                Remove
+              </button>
             </div>
           </UpdateGiftCardForm>
         </div>

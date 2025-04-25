@@ -62,7 +62,16 @@ export function CartLineItem({
               </small>
             </li>
           ))}
+          {line?.attributes?.map((attribute) => (
+            <li key={attribute.key}>
+              <small>
+                {attribute.key}: {attribute.value}
+              </small>
+            </li>
+          ))}
         </ul>
+
+
         <div className="mt-2 flex items-center gap-2">
           <CartLineQuantity line={line} />
         </div>

@@ -1,4 +1,5 @@
 import {Suspense, useState, useEffect, useRef} from 'react';
+import {ShoppingCartIcon} from '@heroicons/react/24/outline';
 import {Await, NavLink, useAsyncValue} from '@remix-run/react';
 import {
   type CartViewPayload,
@@ -69,11 +70,13 @@ export function Header({
           primaryDomainUrl={header.shop.primaryDomain.url}
           publicStoreDomain={publicStoreDomain}
         />
-          <div className="hidden md:block">
-            <CartToggle cart={cart} />
-          </div>
         </div>
       </header>
+
+
+      <div className="fixed bottom-6 right-4 z-50">
+        <CartToggle cart={cart} />
+      </div>
 
       {/* Mobile menu inside Aside */}
       <Aside type="mobile" heading="Menu">
@@ -247,7 +250,10 @@ function CartBadge({count}: {count: number | null}) {
         } as CartViewPayload);
       }}
     >
-      Cart {count === null ? <span>&nbsp;</span> : count}
+      <>
+        <ShoppingCartIcon className="inline w-5 h-5 mr-2" />
+        {count === null ? <span>&nbsp;</span> : count}
+      </>
     </a>
   );
 }

@@ -92,7 +92,7 @@ export default function Product() {
               </h1>
               <ProductImage image={selectedVariant?.image} />
               <div
-                className="prose max-w-none text-lg leading-relaxed"
+                className="prose max-w-none text-lg leading-relaxed overflow-hidden"
                 dangerouslySetInnerHTML={{__html: descriptionHtml}}
               />
             </div>
@@ -113,8 +113,6 @@ export default function Product() {
                   tags={product.tags}
                 />
               </div>
-
-              
             </div>
           </>
         )}
@@ -189,6 +187,58 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
       amount
       currencyCode
     }
+    sellingPlanAllocations(first: 10) {
+      nodes {
+        priceAdjustments {
+          compareAtPrice {
+            amount
+            currencyCode
+          }
+          perDeliveryPrice {
+            amount
+            currencyCode
+          }
+          price {
+            amount
+            currencyCode
+          }
+        }
+        sellingPlan {
+          id
+          name
+          description
+          recurringDeliveries
+          billingPolicy {
+            ... on SellingPlanRecurringBillingPolicy {
+              interval
+              intervalCount
+            }
+          }
+          deliveryPolicy {
+            ... on SellingPlanRecurringDeliveryPolicy {
+              interval
+              intervalCount
+            }
+          }
+          options {
+            name
+            value
+          }
+          checkoutCharge {
+            type
+            value {
+              ... on MoneyV2 {
+                amount
+                currencyCode
+              }
+              ... on SellingPlanCheckoutChargePercentageValue {
+                percentage
+              }
+            }
+          }
+        }
+      }
+    }
   }
 ` as const;
 
@@ -203,6 +253,7 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     encodedVariantExistence
     encodedVariantAvailability
+    requiresSellingPlan
     options {
       name
       optionValues {

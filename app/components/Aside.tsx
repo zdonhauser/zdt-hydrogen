@@ -55,7 +55,7 @@ export function Aside({
 
       {/* Drawer panel */}
       <div
-        className={`fixed top-0 right-0 z-[9999] w-full sm:w-96 h-full transition-transform duration-300 ease-in-out bg-white text-black flex flex-col shadow-2xl border-l-4 border-black ${
+        className={`fixed top-0 right-0 z-[9999] w-full md:w-192 h-full transition-transform duration-300 ease-in-out bg-white text-black flex flex-col shadow-2xl border-l-4 border-black ${
           expanded ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-modal
