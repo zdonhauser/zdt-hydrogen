@@ -21,6 +21,23 @@
   --color-brand-cream: #fffcf0;
   --color-brand-cream-hover: #f5f0d8;
 }
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
 
 img {
   border-radius: 0.5rem;

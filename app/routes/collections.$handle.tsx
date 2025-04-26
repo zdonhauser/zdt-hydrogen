@@ -9,6 +9,7 @@ import {
 import type {ProductItemFragment} from 'storefrontapi.generated';
 import {useVariantUrl} from '~/lib/variants';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
+import PartyCalendar from '~/components/PartyCalendar';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   return [{title: `Hydrogen | ${data?.collection.title ?? ''} Collection`}];
@@ -36,7 +37,7 @@ async function loadCriticalData({
   const {handle} = params;
   const {storefront} = context;
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: 8,
+    pageBy: handle === 'party-booking' ? 100 : 8,
   });
 
   if (!handle) {
@@ -72,31 +73,68 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 
 export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
+  const collectionTitle = collection.title;
 
   return (
-    <div className="collection">
-      <h1>{collection.title}</h1>
-      <p className="collection-description">{collection.description}</p>
-      <PaginatedResourceSection
-        connection={collection.products}
-        resourcesClassName="products-grid"
-      >
-        {({node: product, index}) => (
-          <ProductItem
-            key={product.id}
-            product={product}
-            loading={index < 8 ? 'eager' : undefined}
+    <div className="relative flex flex-col items-center px-4 py-10 bg-[var(--color-brand-green)] text-[var(--color-dark)] overflow-hidden min-h-screen">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex flex-col items-center">
+        {[...Array(30)].map((_, idx) => (
+          <div
+            key={collectionTitle + idx}
+            className={`flex whitespace-nowrap text-5xl md:text-8xl font-extrabold leading-none ${
+              idx % 2 === 0
+                ? 'animate-[scroll-left_linear_infinite]'
+                : 'animate-[scroll-right_linear_infinite]'
+            } ${idx % 2 === 0 ? 'opacity-10' : 'opacity-25'} text-[var(--color-brand-yellow)]`}
+            style={{
+              animationDuration: `${30 + idx * 5}s`,
+              animationTimingFunction: 'linear',
+              animationIterationCount: 'infinite',
+            }}
+          >
+            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
+            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
+            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
+            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
+            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
+            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
+            {collectionTitle}&nbsp;
+          </div>
+        ))}
+      </div>
+      {collection.title === 'Party Rooms' && (
+        <PartyCalendar products={collection.products.nodes} />
+      )}
+      {!(collection.title === 'Party Rooms') && (
+        <div className="relative z-10 w-full max-w-7xl flex flex-col items-center">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-6 text-center">
+            {collection.title}
+          </h1>
+          <p className="text-lg md:text-xl text-center mb-10 max-w-2xl">
+            {collection.description}
+          </p>
+          <PaginatedResourceSection
+            connection={collection.products}
+            resourcesClassName="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {({node: product, index}) => (
+              <ProductItem
+                key={product.id}
+                product={product}
+                loading={index < 8 ? 'eager' : undefined}
+              />
+            )}
+          </PaginatedResourceSection>
+          <Analytics.CollectionView
+            data={{
+              collection: {
+                id: collection.id,
+                handle: collection.handle,
+              },
+            }}
           />
-        )}
-      </PaginatedResourceSection>
-      <Analytics.CollectionView
-        data={{
-          collection: {
-            id: collection.id,
-            handle: collection.handle,
-          },
-        }}
-      />
+        </div>
+      )}
     </div>
   );
 }
@@ -111,7 +149,7 @@ function ProductItem({
   const variantUrl = useVariantUrl(product.handle);
   return (
     <Link
-      className="product-item"
+      className="flex flex-col items-center border-2 border-[var(--color-dark)] bg-[var(--color-light)] rounded-xl p-4 shadow-md hover:scale-105 hover:shadow-lg transition-all"
       key={product.id}
       prefetch="intent"
       to={variantUrl}
@@ -125,8 +163,8 @@ function ProductItem({
           sizes="(min-width: 45em) 400px, 100vw"
         />
       )}
-      <h4>{product.title}</h4>
-      <small>
+      <h4 className="text-md font-bold mt-2 text-center">{product.title}</h4>
+      <small className="text-sm text-[var(--color-dark)]">
         <Money data={product.priceRange.minVariantPrice} />
       </small>
     </Link>
@@ -155,6 +193,14 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
       }
       maxVariantPrice {
         ...MoneyProductItem
+      }
+    }
+    variants(first: 100) {
+      nodes {
+        id
+        title
+        sku
+        availableForSale
       }
     }
   }

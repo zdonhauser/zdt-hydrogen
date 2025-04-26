@@ -11,6 +11,7 @@ import {
 import {ProductPrice} from '~/components/ProductPrice';
 import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
+import {PartyForm} from '~/components/PartyForm';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const title = data?.product?.title ?? 'ZDT’s';
@@ -57,6 +58,7 @@ export default function Product() {
   const data = useLoaderData<typeof loader>();
 
   const product = data?.product;
+  const isPartyProduct = product?.tags?.includes('partydeposit');
 
   // Always safe fallback
   const selectedVariant = useOptimisticVariant(
@@ -105,14 +107,25 @@ export default function Product() {
                 />
               </div>
               */}
-
-              <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
-                <ProductForm
-                  productOptions={productOptions}
-                  selectedVariant={selectedVariant}
-                  tags={product.tags}
-                />
-              </div>
+              {isPartyProduct && (
+                <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
+                  <PartyForm
+                    productOptions={productOptions}
+                    selectedVariant={selectedVariant}
+                    tags={product.tags}
+                    product={product}
+                  />
+                </div>
+              )}
+              {!isPartyProduct && (
+                <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
+                  <ProductForm
+                    productOptions={productOptions}
+                    selectedVariant={selectedVariant}
+                    tags={product.tags}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}

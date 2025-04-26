@@ -1,5 +1,6 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
 import {useLoaderData, type MetaFunction} from '@remix-run/react';
+import PartyPage from '~/components/PartyPage';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   return [{title: `Hydrogen | ${data?.page.title ?? ''}`}];
@@ -54,6 +55,9 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 export default function Page() {
   const {page} = useLoaderData<typeof loader>();
 
+  if (page.handle === 'party') {
+    return <PartyPage/>;
+  }
   return (
     <div className="page">
       <header>
@@ -74,6 +78,7 @@ const PAGE_QUERY = `#graphql
     page(handle: $handle) {
       id
       title
+      handle
       body
       seo {
         description

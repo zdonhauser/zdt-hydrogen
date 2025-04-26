@@ -27,6 +27,7 @@ export function ProductForm({
 
   const formRef = useRef<HTMLDivElement>(null);
   const [calendarScrollable, setCalendarScrollable] = useState(false);
+  const [showCartMessage, setShowCartMessage] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
