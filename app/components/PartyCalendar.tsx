@@ -15,9 +15,9 @@ export default function PartyCalendar({products}: {products: any[]}) {
         if (variant?.sku) {
           const dateKey = variant.sku.slice(0, 6); // MMDDYY
           const dateObject = new Date(
-            parseInt(dateKey.slice(0, 2)),
-            parseInt(dateKey.slice(2, 4)) - 1,
-            parseInt(dateKey.slice(4, 6)),
+            parseInt(dateKey.slice(4, 6)) + 2000,
+            parseInt(dateKey.slice(0, 2)) - 1,
+            parseInt(dateKey.slice(2, 4)),
           );
           console.log(dateKey, 'for', product.title);
           if (!dates[dateKey]) dates[dateKey] = [];
@@ -116,7 +116,7 @@ export default function PartyCalendar({products}: {products: any[]}) {
                 <button
                   key={idx}
                   onClick={() => setSelectedDate(dateKey)}
-                  className={`h-20 flex flex-col items-center justify-center border-2 rounded-lg ${
+                  className={`h-10 sm:h-20 flex flex-col items-center justify-center border-2 rounded-lg ${
                     exists
                       ? selectedDate === dateKey
                         ? 'bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
@@ -128,7 +128,7 @@ export default function PartyCalendar({products}: {products: any[]}) {
                 >
                   {date.getDate()}
                   {isAvailable && (
-                    <span className="text-xs mt-1">Available</span>
+                    <span className="text-xs mt-1 hidden md:block">Available</span>
                   )}
                 </button>
               );
