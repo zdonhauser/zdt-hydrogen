@@ -1,11 +1,6 @@
 import {getShopAnalytics} from '@shopify/hydrogen';
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import {
-  Outlet,
-  useRouteError,
-  isRouteErrorResponse,
-  type ShouldRevalidateFunction,
-} from '@remix-run/react';
+import { Outlet, useRouteError, isRouteErrorResponse, type ShouldRevalidateFunction } from 'react-router';
 import favicon from '~/assets/favicon.svg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 

@@ -1,5 +1,5 @@
 import {Suspense, useState, useEffect} from 'react';
-import {Await, NavLink} from '@remix-run/react';
+import { Await, NavLink } from 'react-router';
 import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
 
 interface FooterProps {

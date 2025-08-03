@@ -1,12 +1,5 @@
 import {useNonce, Analytics} from '@shopify/hydrogen';
-import {
-  Links,
-  Meta,
-  Scripts,
-  useRouteLoaderData,
-  ScrollRestoration,
-  Outlet,
-} from '@remix-run/react';
+import { Links, Meta, Scripts, useRouteLoaderData, ScrollRestoration, Outlet } from 'react-router';
 import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import tailwindCss from './styles/tailwind.css?url';

@@ -1,6 +1,6 @@
 import {useState, useMemo} from 'react';
 
-type CalendarData = {
+export type CalendarData = {
   [year: string]: {
     [month: string]: {
       [day: string]: string | null;
@@ -12,15 +12,18 @@ export default function Calendar({
   hoursData,
   waterData,
   notesData,
+  expanded = false,
 }: {
   hoursData: CalendarData;
   waterData: CalendarData;
   notesData: CalendarData;
+  expanded?: boolean;
 }) {
   const today = useMemo(() => new Date(), []);
   const months = useMemo(() => {
     const list = [];
-    for (let i = 0; i < 12; i++) {
+    // Add previous 6 months
+    for (let i = -6; i < 12; i++) {
       const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
       const yy = date.getFullYear().toString().slice(-2);
       const m = date.getMonth().toString();
@@ -29,15 +32,20 @@ export default function Calendar({
       const hasHours = Object.entries(monthObj)
         .filter(([key]) => /^\d+$/.test(key))
         .some(([, v]) => typeof v === 'string' && v.trim() !== '');
-      if (!hasHours) break;
-      list.push(date);
+      // Only add months with data or future months
+      if (hasHours || i >= 0) {
+        list.push(date);
+      }
     }
     return list;
   }, [today, hoursData]);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Set initial index to the current month (6 months back from today)
+  const [currentIndex, setCurrentIndex] = useState(6);
   // toggle between summary and full calendar
-  const [showFull, setShowFull] = useState(false);
+  const [showFull, setShowFull] = useState(expanded);
+
+
   const [activeNoteCell, setActiveNoteCell] = useState<string | null>(null);
 
   // build summary of today + next 6 open days
@@ -136,7 +144,7 @@ export default function Calendar({
         </div>
       )}
       {showFull && (
-        <div className="w-full bg-[var(--color-brand-blue)] py-8 px-2 relative overflow-hidden">
+        <div className="w-full bg-[var(--color-brand-blue)] py-8 px-2 relative border-t-4 border-b-4 border-[var(--color-brand-dark)] overflow-hidden">
           {/* Feastables texture overlay */}
           <div className="absolute inset-0 z-0 text-6xl md:text-8xl font-black text-[var(--color-brand-dark)] opacity-10 pointer-events-none flex flex-wrap">
             HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;HOURS&nbsp;
@@ -168,7 +176,7 @@ export default function Calendar({
                 >
                   Prev
                 </button>
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-wide text-[var(--color-dark)]">
+                <h2 className="text-lg md:text-2xl lg:text-2xl font-extrabold tracking-wide text-[var(--color-dark)]">
                   {currentDate.toLocaleString('default', {month: 'long'})}{' '}
                   {year}
                 </h2>

@@ -1,4 +1,4 @@
-import {Link} from '@remix-run/react';
+import { Link } from 'react-router';
 import {useState} from 'react';
 import {type MappedProductOptions} from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';

@@ -1,6 +1,6 @@
 import {Suspense, useState, useEffect, useRef} from 'react';
 import {ShoppingCartIcon} from '@heroicons/react/24/outline';
-import {Await, NavLink, useAsyncValue} from '@remix-run/react';
+import { Await, NavLink, useAsyncValue } from 'react-router';
 import {
   type CartViewPayload,
   useAnalytics,

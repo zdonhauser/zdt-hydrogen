@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {Link} from '@remix-run/react';
+import { Link } from 'react-router';
 
 export default function ScrollingRibbon({
   items = [],
@@ -15,7 +15,7 @@ export default function ScrollingRibbon({
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-    <div
+    (<div
       className="relative w-full border-y-4 border-black bg-[var(--color-brand-yellow)] text-black font-extrabold uppercase tracking-widest text-lg sm:text-xl overflow-x-auto overflow-y-hidden select-none touch-pan-x scrollbar-hide"
       style={{
         WebkitOverflowScrolling: 'touch',
@@ -47,7 +47,6 @@ export default function ScrollingRibbon({
           </React.Fragment>
         ))}
       </div>
-
       <style>
         {`
           @keyframes scroll-left {
@@ -68,6 +67,6 @@ export default function ScrollingRibbon({
           }
         `}
       </style>
-    </div>
+    </div>)
   );
 }

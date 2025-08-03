@@ -1,0 +1,181 @@
+import { type MetaFunction, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
+import { Form, useNavigation, useSearchParams, useActionData } from 'react-router';
+import { useEffect, useState } from 'react';
+
+export const meta: MetaFunction = () => {
+  return [{ title: 'Contact Us' }]  ;
+};  
+
+export default function ContactPage() {
+  const navigation = useNavigation();
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState<{type: 'success' | 'error' | null; message: string}>({type: null, message: ''});
+  const actionData = useActionData<{success: boolean; error?: string}>();
+
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        setStatus({
+          type: 'success',
+          message: 'Your message has been sent successfully! We\'ll get back to you soon.'
+        });
+      } else {
+        setStatus({
+          type: 'error',
+          message: actionData.error || 'There was an error sending your message. Please try again.'
+        });
+      }
+    }
+  }, [actionData]);
+
+  // Clear status when form is reset or when navigating away
+  useEffect(() => {
+    return () => setStatus({type: null, message: ''});
+  }, []);
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[var(--color-brand-blue)] to-[var(--color-light)] py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-wide text-[var(--color-dark)] mb-2">
+            Contact Us
+          </h1>
+          <p className="text-lg text-[var(--color-brand-dark)]">
+            We&apos;d love to hear from you! Send us a message and we&apos;ll get back to you as soon as possible.
+          </p>
+        </header>
+        
+        <div className="bg-[var(--color-light)] p-6 md:p-8 rounded-xl shadow-2xl border-4 border-[var(--color-brand-dark)]">
+          {status.type && (
+            <div className={`p-4 mb-6 rounded-lg ${status.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {status.message}
+            </div>
+          )}
+          <Form method="post" className="space-y-6" replace>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-[var(--color-dark)] mb-1">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  className="w-full px-4 py-2 border-2 border-[var(--color-brand-dark)] rounded-lg focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-[var(--color-dark)] mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  className="w-full px-4 py-2 border-2 border-[var(--color-brand-dark)] rounded-lg focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="subject" className="block text-sm font-medium text-[var(--color-dark)] mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                id="subject"
+                name="subject"
+                className="w-full px-4 py-2 border-2 border-[var(--color-brand-dark)] rounded-lg focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="message" className="block text-sm font-medium text-[var(--color-dark)] mb-1">
+                Message <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                rows={5}
+                required
+                className="w-full px-4 py-2 border-2 border-[var(--color-brand-dark)] rounded-lg focus:ring-2 focus:ring-[var(--color-brand-blue)] focus:border-transparent"
+              ></textarea>
+            </div>
+
+            <input type="hidden" name="formName" value="Contact Us" />
+            
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={navigation.state === 'submitting'}
+                className={`w-full bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-brand-blue)] ${navigation.state === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {navigation.state === 'submitting' ? 'Sending...' : 'Send Message'}
+              </button>
+            </div>
+          </Form>
+          
+          <div className="mt-12 pt-8 border-t-2 border-[var(--color-brand-blue)]">
+            <h3 className="text-xl font-bold text-[var(--color-brand-dark)] mb-4">Visit Us</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-[var(--color-dark)]">Address</h4>
+                <p className="text-[var(--color-dark)]">
+                  1218 N Camp St<br />
+                  Seguin, TX 78155
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-[var(--color-dark)]">Contact Info</h4>
+                <p className="text-[var(--color-dark)]">
+                  Phone: (830) 386-0151
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// This would be the action that handles form submission
+export async function action({ request }: LoaderFunctionArgs) {
+  const formData = await request.formData();
+  const name = formData.get('name');
+  const email = formData.get('email');
+  const subject = formData.get('subject');
+  const message = formData.get('message');
+  const formName = formData.get('formName');
+
+  const payload = {
+    name,
+    email,
+    subject,
+    message,
+    formName,
+  };
+
+  try {
+    // TODO: Replace the URL below with your actual Pipedream webhook URL
+    const response = await fetch('https://eon2vfigqmpnne.m.pipedream.net', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending to Pipedream:', error);
+    return { 
+      success: false, 
+      error: 'Failed to send message. Please try again later.' 
+    };
+  }
+}

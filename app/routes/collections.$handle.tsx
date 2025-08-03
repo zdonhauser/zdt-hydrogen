@@ -1,12 +1,12 @@
 import {redirect, type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import {useLoaderData, Link, type MetaFunction} from '@remix-run/react';
+import { useLoaderData, Link, type MetaFunction } from 'react-router';
 import {
   getPaginationVariables,
   Image,
   Money,
   Analytics,
 } from '@shopify/hydrogen';
-import type {ProductItemFragment} from 'storefrontapi.generated';
+import type {ProductItemCollectionHandleFragment} from 'storefrontapi.generated';
 import {useVariantUrl} from '~/lib/variants';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import PartyCalendar from '~/components/PartyCalendar';
@@ -113,7 +113,7 @@ export default function Collection() {
           <p className="text-lg md:text-xl text-center mb-10 max-w-2xl">
             {collection.description}
           </p>
-          <PaginatedResourceSection
+          <PaginatedResourceSection<ProductItemCollectionHandleFragment>
             connection={collection.products}
             resourcesClassName="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
           >
@@ -143,7 +143,7 @@ function ProductItem({
   product,
   loading,
 }: {
-  product: ProductItemFragment;
+  product: ProductItemCollectionHandleFragment;
   loading?: 'eager' | 'lazy';
 }) {
   const variantUrl = useVariantUrl(product.handle);
@@ -176,7 +176,7 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     amount
     currencyCode
   }
-  fragment ProductItem on Product {
+  fragment ProductItemCollectionHandle on Product {
     id
     handle
     title
@@ -230,7 +230,7 @@ const COLLECTION_QUERY = `#graphql
         after: $endCursor
       ) {
         nodes {
-          ...ProductItem
+          ...ProductItemCollectionHandle
         }
         pageInfo {
           hasPreviousPage

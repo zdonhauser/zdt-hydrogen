@@ -1,4 +1,4 @@
-import {Link, useNavigate} from '@remix-run/react';
+import { Link, useNavigate } from 'react-router';
 import {type MappedProductOptions} from '@shopify/hydrogen';
 import type {
   Maybe,
@@ -174,7 +174,7 @@ useEffect(() => {
 
         return (
           <>
-            {isChooseYourDate && (
+            {isChooseYourDate ? (
               <div className="my-4 flex-row">
                 <h3 className="">Choose Your Date:</h3>
                 <div
@@ -222,8 +222,7 @@ useEffect(() => {
                   ))}
                 </div>
               </div>
-            )}
-            {!isChooseYourDate && (
+            ) : (
               <div className="product-options" key={option.name}>
                 <h5>{option.name}</h5>
                 <div className="product-options-grid">
@@ -310,7 +309,7 @@ useEffect(() => {
           </>
         );
       })}
-      {selectedVariant?.sellingPlanAllocations?.nodes?.length && (
+      {selectedVariant?.sellingPlanAllocations?.nodes?.length ? (
         <div className="my-4">
           <h5 className="text-left font-bold mb-2">Choose a Plan:</h5>
           <div className="flex flex-col gap-4">
@@ -353,8 +352,9 @@ useEffect(() => {
             })}
           </div>
         </div>
-      )}
-      {requireMemberNameAndDOB && (
+      ):null}
+      {requireMemberNameAndDOB ? (
+        <>
         <div className="mt-6 flex flex-col items-left  justify-center">
           {Array.from({length: quantity}).map((_, index) => (
             <div key={index} className="space-y-4">
@@ -433,16 +433,16 @@ useEffect(() => {
             </div>
           ))}
         </div>
-      )}
-      {!requireMemberNameAndDOB ||
-      memberDetails.every(
-        (member) =>
-          member.name.trim() && member.month && member.day && member.year,
-      ) ? null : (
-        <p className="text-center text-red-600">
-          Please enter all required fields before adding to cart
-        </p>
-      )}
+        {memberDetails.every(
+          (member) =>
+            member.name.trim() && member.month && member.day && member.year,
+        ) ? null : (
+          <p className="text-center text-red-600">
+            Please enter all required fields before adding to cart
+          </p>
+        )}
+        </>
+      ):null}
 
       <div className="mt-6 flex items-center gap-4 justify-center">
         <div className="flex items-center border border-black rounded bg-white ">

@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {Link} from '@remix-run/react';
+import { Link } from 'react-router';
 
 interface HeroProps {
   id: string;

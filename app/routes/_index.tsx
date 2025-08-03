@@ -1,5 +1,5 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import {useLoaderData, type MetaFunction} from '@remix-run/react';
+import { useLoaderData, type MetaFunction } from 'react-router';
 import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
@@ -199,7 +199,7 @@ const ATTRACTION_PRODUCTS_QUERY = `#graphql
 const ADMISSION_PRODUCTS_QUERY = `#graphql
   query AdmissionProducts($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    collections(first: 1, reverse: false, query: "Admission") {
+    collections(first: 1, reverse: false, query: "Tickets") {
       nodes {
         products(first: 10) {
           nodes {

@@ -1,5 +1,5 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import {useLoaderData, type MetaFunction} from '@remix-run/react';
+import { useLoaderData, type MetaFunction } from 'react-router';
 import PartyPage from '~/components/PartyPage';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
@@ -58,12 +58,72 @@ export default function Page() {
   if (page.handle === 'party') {
     return <PartyPage/>;
   }
+  
+  // Special styling for About Us page
+  if (page.handle === 'about-us') {
+    return (
+      <div className="page bg-gradient-to-b from-[var(--color-brand-blue)] to-[var(--color-light)] min-h-screen py-12 px-4">
+        <div className="max-w-4xl mx-auto bg-[var(--color-light)] p-6 md:p-8 rounded-xl shadow-2xl border-4 border-[var(--color-brand-dark)]">
+          <header className="mb-8 text-center">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-wide text-[var(--color-dark)] mb-4">
+              {page.title}
+            </h1>
+            <div className="h-1 w-24 bg-[var(--color-brand-blue)] mx-auto rounded-full"></div>
+          </header>
+          <main className="prose prose-lg max-w-none">
+            <div 
+              className="text-[var(--color-dark)] space-y-6"
+              dangerouslySetInnerHTML={{
+                __html: page.body
+                  .replace(/<p>/g, '<p class="mb-4">')
+                  .replace(/<h2>/g, '<h2 class="text-2xl font-bold text-[var(--color-brand-dark)] mt-8 mb-4">')
+                  .replace(/<ul>/g, '<ul class="list-disc pl-6 space-y-2 my-4">')
+                  .replace(/<ol>/g, '<ol class="list-decimal pl-6 space-y-2 my-4">')
+                  .replace(/<a /g, '<a class="text-[var(--color-brand-blue)] hover:underline font-medium" ')
+                  .replace(/<img([^>]*)>/g, (match, attributes) => {
+                    // Add classes to images while preserving existing attributes
+                    return `<img${attributes} class="mx-auto my-6 max-w-full h-auto rounded-lg border-2 border-[var(--color-brand-dark)] shadow-md" />`;
+                  })
+              }}
+            />
+          </main>
+          
+          {/* Team section if needed */}
+          {/* <section className="mt-12">
+            <h2 className="text-2xl font-bold text-[var(--color-brand-dark)] mb-6">Our Team</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              Team member cards can go here
+            </div>
+          </section> */}
+          
+          <div className="mt-12 pt-8 border-t-2 border-[var(--color-brand-blue)]">
+            <p className="text-center text-[var(--color-brand-dark)] font-medium">
+              Thanks for being part of our adventure! 🚀
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Default page template for other pages
   return (
-    <div className="page">
-      <header>
-        <h1>{page.title}</h1>
-      </header>
-      <main dangerouslySetInnerHTML={{__html: page.body}} />
+    <div className="page bg-gradient-to-b from-[var(--color-brand-blue)] to-[var(--color-light)] min-h-screen py-12 px-4">
+      <div className="max-w-4xl mx-auto bg-[var(--color-light)] p-6 md:p-8 rounded-xl shadow-2xl border-4 border-[var(--color-brand-dark)]">
+        <header className="mb-8">
+          <h1 className="text-3xl font-extrabold text-[var(--color-brand-dark)]">
+            {page.title}
+          </h1>
+        </header>
+        <main 
+          className="prose max-w-none text-[var(--color-dark)]"
+          dangerouslySetInnerHTML={{
+            __html: page.body
+              .replace(/<p>/g, '<p class="mb-4">')
+              .replace(/<h2>/g, '<h2 class="text-2xl font-bold text-[var(--color-brand-dark)] mt-8 mb-4">')
+          }}
+        />
+      </div>
     </div>
   );
 }
