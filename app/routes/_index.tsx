@@ -4,6 +4,8 @@ import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
 import Calendar from '~/components/Calendar';
+import { PricingInfo } from '~/components/PricingInfo';
+import { AnimatedBackground } from '~/components/AnimatedBackground';
 import {AttractionProductsQuery} from 'storefrontapi.generated';
 
 export const meta: MetaFunction = () => {
@@ -24,6 +26,9 @@ export async function loader(args: LoaderFunctionArgs) {
     await context.storefront.query(ADMISSION_PRODUCTS_QUERY);
   const admissionProducts =
     admissionCollection.collections?.nodes[0].products?.nodes ?? [];
+
+  const couponsCollection = await context.storefront.query(COUPONS_DEALS_QUERY);
+  const couponsDeals = couponsCollection.collections?.nodes[0]?.products?.nodes ?? [];
 
   const {metaobjects} = await context.storefront.query(HOURS_QUERY);
   const edge = metaobjects?.edges?.[0];
@@ -55,6 +60,7 @@ export async function loader(args: LoaderFunctionArgs) {
     ...criticalData,
     attractions: attractions.products.nodes,
     admissionProducts,
+    couponsDeals,
     hoursData,
     waterData,
     notesData,
@@ -85,7 +91,7 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 }
 
 export default function Homepage() {
-  const {attractions, admissionProducts, hoursData, waterData, notesData} =
+  const {attractions, admissionProducts, couponsDeals, hoursData, waterData, notesData} =
     useLoaderData<typeof loader>();
 
   return (
@@ -96,12 +102,56 @@ export default function Homepage() {
         handles={attractions.map((a: any) => a.handle)}
       />
       <Carousel products={admissionProducts} />
-      <Calendar
-        hoursData={hoursData}
-        waterData={waterData}
-        notesData={notesData}
-      />
-      <Carousel products={attractions} />
+      
+      {/* Hours Section */}
+      <section className="relative bg-gradient-to-br from-[var(--color-brand-green)] to-[var(--color-brand-green-hover)] overflow-hidden">
+        <AnimatedBackground 
+          text="HOURS" 
+          textColor="text-green-200" 
+          opacity="opacity-20"
+        />
+        <div className="relative z-10">
+          <Calendar
+            hoursData={hoursData}
+            waterData={waterData}
+            notesData={notesData}
+          />
+        </div>
+      </section>
+      
+      {/* Attractions Section */}
+      <section className="bg-[var(--color-brand-cream)]">
+        <div className="pt-16 pb-4 bg-[var(--color-brand-cream)]">
+          <h2 className="text-4xl md:text-5xl font-black text-center text-[var(--color-brand-dark)]">
+            Attractions
+          </h2>
+        </div>
+        <Carousel products={attractions} />
+      </section>
+
+      {/* Pricing Section */}
+      <section className="relative bg-gradient-to-br from-[var(--color-brand-blue)] to-[var(--color-brand-blue-hover)] overflow-hidden border-t-5 border-b-5 border-[var(--color-brand-dark)]">
+        <AnimatedBackground 
+          text="PRICING" 
+          textColor="text-blue-200" 
+          opacity="opacity-20"
+        />
+        <div className="relative z-10 py-16 container mx-auto px-4">
+          <PricingInfo showTitle={true} />
+        </div>
+      </section>
+
+      {/* Coupons & Deals Section */}
+      {couponsDeals.length > 0 && (
+        <section className="bg-[var(--color-brand-cream)]">
+          <div className="pt-16 pb-4 bg-[var(--color-brand-cream)]">
+            <h2 className="text-4xl md:text-5xl font-black text-center text-[var(--color-brand-dark)]">
+              Coupons & Deals
+            </h2>
+          </div>
+          <Carousel products={couponsDeals} imageShape="square" />
+        </section>
+      )}
     </>
   );
 }
@@ -207,6 +257,33 @@ const ADMISSION_PRODUCTS_QUERY = `#graphql
             title
             handle
             descriptionHtml
+          }
+        }
+      }
+    }
+  }
+` as const;
+
+const COUPONS_DEALS_QUERY = `#graphql
+  query CouponsDeals($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    collections(first: 1, reverse: false, query: "Coupons") {
+      nodes {
+        products(first: 10) {
+          nodes {
+            id
+            title
+            handle
+            descriptionHtml
+            images(first: 1) {
+              nodes {
+                id
+                url
+                altText
+                width
+                height
+              }
+            }
           }
         }
       }

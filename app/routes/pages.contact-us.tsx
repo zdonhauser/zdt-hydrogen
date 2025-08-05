@@ -10,6 +10,7 @@ export default function ContactPage() {
   const navigation = useNavigation();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<{type: 'success' | 'error' | null; message: string}>({type: null, message: ''});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const actionData = useActionData<{success: boolean; error?: string}>();
 
   useEffect(() => {
@@ -19,11 +20,13 @@ export default function ContactPage() {
           type: 'success',
           message: 'Your message has been sent successfully! We\'ll get back to you soon.'
         });
+        setHasSubmitted(true);
       } else {
         setStatus({
           type: 'error',
           message: actionData.error || 'There was an error sending your message. Please try again.'
         });
+        setHasSubmitted(false); // Allow retry on error
       }
     }
   }, [actionData]);
@@ -109,10 +112,10 @@ export default function ContactPage() {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={navigation.state === 'submitting'}
-                className={`w-full bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-brand-blue)] ${navigation.state === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={navigation.state === 'submitting' || hasSubmitted}
+                className={`w-full bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-brand-blue)] ${(navigation.state === 'submitting' || hasSubmitted) ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {navigation.state === 'submitting' ? 'Sending...' : 'Send Message'}
+                {navigation.state === 'submitting' ? 'Sending...' : hasSubmitted ? 'Message Sent' : 'Send Message'}
               </button>
             </div>
           </Form>

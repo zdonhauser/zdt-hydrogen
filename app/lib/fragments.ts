@@ -47,6 +47,7 @@ export const CART_QUERY_FRAGMENT = `#graphql
           title
           id
           vendor
+          tags
         }
         selectedOptions {
           name
@@ -97,6 +98,7 @@ export const CART_QUERY_FRAGMENT = `#graphql
           title
           id
           vendor
+          tags
         }
         selectedOptions {
           name
@@ -158,6 +160,22 @@ export const CART_QUERY_FRAGMENT = `#graphql
     discountCodes {
       code
       applicable
+    }
+    delivery {
+      addresses {
+        id
+        selected
+        oneTimeUse
+        address {
+          ... on CartDeliveryAddress {
+            address1
+            city
+            provinceCode
+            countryCode
+            zip
+          }
+        }
+      }
     }
   }
 ` as const;

@@ -1,30 +1,18 @@
 import { Link } from 'react-router';
-import {useState} from 'react';
+import { AnimatedBackground } from '~/components/AnimatedBackground';
 
 export default function PartyPage() {
-  const [isPaused, setIsPaused] = useState(false);
   return (
     <div className="relative flex flex-col justify-center items-center px-4 py-10 bg-[var(--color-brand-green)] text-[var(--color-dark)] overflow-hidden">
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex flex-col items-center">
-        {[...Array(30)].map((_, idx) => (
-          <div
-            key={idx}
-            className={`flex whitespace-nowrap text-6xl md:text-8xl font-extrabold leading-none ${
-              idx % 2 === 0 ? 'animate-[scroll-left_linear_infinite]' : 'animate-[scroll-right_linear_infinite]'
-            } ${idx % 2 === 0 ? 'opacity-20' : 'opacity-50'} text-[var(--color-brand-green-hover)]`}
-            style={{
-              animationDuration: `${40 + idx * 5}s`,
-              animationPlayState: isPaused ? 'paused' : 'running',
-            }}
-          >
-            PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;PARTY&nbsp;
-          </div>
-        ))}
-      </div>
+      <AnimatedBackground 
+        text="PARTY" 
+        textColor="text-[var(--color-brand-green-hover)]" 
+        opacity="opacity-20"
+      />
       <div className="relative z-10 w-full flex flex-col justify-center items-center px-4 py-10 ">
-        <h1 className="text-4xl font-bold text-center mb-8">Party Rooms</h1>
+        <h1 className="text-5xl md:text-6xl font-black text-center mb-8 drop-shadow-lg">Party Rooms</h1>
 
-        <p className="text-center text-lg max-w-3xl mb-10 m-auto">
+        <p className="text-center text-xl md:text-2xl font-bold max-w-3xl mb-10 m-auto drop-shadow-lg p-4">
           Rent out a party room for your next birthday party, company party, or
           event! There&apos;s no fee for the room, only a minimum number of
           wristbands you&apos;re required to purchase to reserve the room. We
@@ -77,7 +65,7 @@ export default function PartyPage() {
           ))}
         </div>
 
-        <h2 className="text-2xl font-bold mb-4">Food Options</h2>
+        <h2 className="text-3xl md:text-4xl font-black mb-4 drop-shadow-lg">Food Options</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 w-full max-w-5xl">
           {foodOptions.map((food) => (
             <div
@@ -98,8 +86,8 @@ export default function PartyPage() {
           Book Now
         </button>
 
-        <div className="max-w-3xl text-center mb-12 text-sm">
-          <p>
+        <div className="max-w-3xl text-center mb-12 p-4">
+          <p className="text-lg md:text-xl font-bold drop-shadow-lg">
             Notice: A $60 non-refundable deposit is required upon reservation
             for either the Carousel or Large Party Room, $100 for the Midway
             Point, or $400 for the Turning Point Party Station. No outside food
@@ -112,7 +100,7 @@ export default function PartyPage() {
         </div>
 
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Printable Invitations:</h2>
+          <h2 className="text-3xl md:text-4xl font-black mb-4 drop-shadow-lg">Printable Invitations:</h2>
           <div className="flex flex-col md:flex-row gap-4 justify-center">
             <button
               className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold px-5 py-3 rounded-full border-2 border-[var(--color-dark)] shadow-md transition-all"

@@ -17,7 +17,7 @@ const BRAND_COLORS = [
   'var(--color-brand-pink)',
 ];
 
-export default function Carousel({products}: {products: ProductNode[]}) {
+export default function Carousel({products, imageShape = 'card'}: {products: ProductNode[], imageShape?: 'card' | 'square'}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevActiveIndex, setPrevActiveIndex] = useState(0);
@@ -171,9 +171,9 @@ export default function Carousel({products}: {products: ProductNode[]}) {
             const width = isActive
               ? `clamp(280px,25vw,360px)`
               : `clamp(200px,18vw,280px)`;
-            const height = isActive
-              ? `clamp(460px,32vw,580px)`
-              : `clamp(300px,24vw,460px)`;
+            const height = imageShape === 'square' 
+              ? (isActive ? `clamp(580px,40vw,720px)` : `clamp(420px,32vw,560px)`)
+              : (isActive ? `clamp(460px,32vw,580px)` : `clamp(300px,24vw,460px)`);
 
             const image = product.images?.nodes[0]?.url || null;
 
@@ -196,68 +196,127 @@ export default function Carousel({products}: {products: ProductNode[]}) {
                 }}
               >
                 <div className="h-full rounded-xl shadow-lg overflow-hidden bg-[var(--color-light)] border-[var(--color-dark)] border-4">
-                  {/* top colored panel */}
-                  <div
-                    className={`flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full`}
-                    style={{
-                      height: isActive ? '40%' : '50%',
-                      backgroundImage: image ? `url(${image})` : undefined,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundColor: image ? undefined : BRAND_COLORS[i % BRAND_COLORS.length],
-                    }}
-                  >
-                    {!image && (
-                      <>
-                        <img
-                          src="/logos/black.png"
-                          alt="ZDT's Logo"
-                          className="w-50"
-                        />
-                        <p
-                          className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}
-                        >
-                          {product.title}
-                        </p>
-                      </>
-                    )}
-                    {image && (
-                      <h3
-                        className="text-[var(--color-light)] text-center h-full flex items-end justify-end drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]"
-                      >
-                        {product.title}
-                      </h3>
-                    )}
-                  </div>
-                  {/* bottom white panel */}
-                  <div className="p-4 bg-[var(--color-light)] h-[55%]">
-                    <div className="relative h-full">
-                        <div
-                          className="prose max-w-none h-full overflow-hidden"
-                          dangerouslySetInnerHTML={{
-                            __html: product.descriptionHtml,
-                          }}
-                        />
-
-                      {/* fade‐out gradient */}
+                  {imageShape === 'square' ? (
+                    <>
+                      {/* Square image panel */}
                       <div
-                        className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
+                        className={`w-full aspect-square border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl overflow-hidden`}
                         style={{
-                          background:
-                            'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                          backgroundImage: image ? `url(${image})` : undefined,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundColor: image ? undefined : BRAND_COLORS[i % BRAND_COLORS.length],
                         }}
-                      />
-
-                      {/* ellipsis indicator */}
-                      <br />
-                      <span
-                        className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
-                        aria-hidden="true"
                       >
-                        …
-                      </span>
-                    </div>
-                  </div>
+                        {!image && (
+                          <div className="flex flex-col items-center justify-center h-full p-4">
+                            <img
+                              src="/logos/black.png"
+                              alt="ZDT's Logo"
+                              className="w-50"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {/* Bottom panel with title and description - 1.5x the image height */}
+                      <div className="p-4 bg-[var(--color-light)]" style={{ height: '150%' }}>
+                        <div className="relative h-full">
+                          <h3 className={`${isActive ? 'text-xl' : 'text-lg'} font-black text-[var(--color-dark)] text-center mb-3`}>
+                            {product.title}
+                          </h3>
+                          <div
+                            className="prose max-w-none h-full overflow-hidden"
+                            dangerouslySetInnerHTML={{
+                              __html: product.descriptionHtml,
+                            }}
+                          />
+
+                          {/* fade‐out gradient */}
+                          <div
+                            className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
+                            style={{
+                              background:
+                                'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                            }}
+                          />
+
+                          {/* ellipsis indicator */}
+                          <br />
+                          <span
+                            className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
+                            aria-hidden="true"
+                          >
+                            …
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Card shape - image with title overlay */}
+                      <div
+                        className={`flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full`}
+                        style={{
+                          height: isActive ? '40%' : '50%',
+                          backgroundImage: image ? `url(${image})` : undefined,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundColor: image ? undefined : BRAND_COLORS[i % BRAND_COLORS.length],
+                        }}
+                      >
+                        {!image && (
+                          <>
+                            <img
+                              src="/logos/black.png"
+                              alt="ZDT's Logo"
+                              className="w-50"
+                            />
+                            <p
+                              className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}
+                            >
+                              {product.title}
+                            </p>
+                          </>
+                        )}
+                        {image && (
+                          <h3
+                            className="text-[var(--color-light)] text-center h-full flex items-end justify-end drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]"
+                          >
+                            {product.title}
+                          </h3>
+                        )}
+                      </div>
+                      {/* Card shape - description only panel */}
+                      <div className="p-4 bg-[var(--color-light)] h-[55%]">
+                        <div className="relative h-full">
+                            <div
+                              className="prose max-w-none h-full overflow-hidden"
+                              dangerouslySetInnerHTML={{
+                                __html: product.descriptionHtml,
+                              }}
+                            />
+
+                          {/* fade‐out gradient */}
+                          <div
+                            className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
+                            style={{
+                              background:
+                                'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                            }}
+                          />
+
+                          {/* ellipsis indicator */}
+                          <br />
+                          <span
+                            className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
+                            aria-hidden="true"
+                          >
+                            …
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </button>
             );

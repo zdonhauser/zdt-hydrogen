@@ -447,7 +447,7 @@ export function PartyForm({
       }
     });
 
-    // Calculate tax (8.25%)
+    // Calculate tax (8.25%) on entire party for estimation purposes
     const tax = subtotal * 0.0825;
     const total = subtotal + tax;
 
@@ -476,721 +476,956 @@ export function PartyForm({
     calculateCost();
   }, [calculateCost]);
 
+  // Define the steps
+  const totalSteps = 6;
+  const stepTitles = [
+    "Party Details",
+    "Guest Count", 
+    "Pizza & Drinks",
+    "Add-ons",
+    "Contact & Acknowledgements",
+    "Review & Book"
+  ];
+
+  // Step validation functions
+  const canProceedFromStep = (step: number): boolean => {
+    switch(step) {
+      case 1: // Party Details
+        if (partyType === 'Birthday') return !!(birthdayName && birthdayAge);
+        if (partyType === 'Team') return !!(teamName && teamActivity);
+        if (partyType === 'Company') return !!companyName;
+        if (partyType === 'Other') return !!otherParty;
+        return true;
+      case 2: // Guest Count
+        return numParticipants >= roomDetails.minParticipants;
+      case 3: // Pizza & Drinks
+        return drinkChoices.length > 0;
+      case 4: // Add-ons (optional)
+        return true;
+      case 5: // Contact & Acknowledgements
+        return !!(contactPhone && ackList && ackSocks && ackEmail);
+      default:
+        return true;
+    }
+  };
+
+  const nextStep = () => {
+    if (canProceedFromStep(currentStep) && currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+      setFormError(null);
+      // Scroll wizard into view
+      setTimeout(() => {
+        const wizardElement = document.querySelector('[data-wizard-container]');
+        if (wizardElement) {
+          wizardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } else {
+      // Show validation error
+      if (currentStep === 1) {
+        if (partyType === 'Birthday' && (!birthdayName || !birthdayAge)) {
+          setFormError('Please enter the birthday star\'s name and age.');
+        } else if (partyType === 'Team' && (!teamName || !teamActivity)) {
+          setFormError('Please enter team name and activity.');
+        } else if (partyType === 'Company' && !companyName) {
+          setFormError('Please enter company name.');
+        } else if (partyType === 'Other' && !otherParty) {
+          setFormError('Please describe what you\'re celebrating.');
+        }
+      } else if (currentStep === 2) {
+        setFormError(`A minimum of ${roomDetails.minParticipants} participants is required for the ${roomDetails.room} room.`);
+      } else if (currentStep === 3) {
+        setFormError('Please select at least one drink choice.');
+      } else if (currentStep === 5) {
+        setFormError('Please complete all contact information and acknowledgements.');
+      }
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      setFormError(null);
+      // Scroll wizard into view
+      setTimeout(() => {
+        const wizardElement = document.querySelector('[data-wizard-container]');
+        if (wizardElement) {
+          wizardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
   return (
-    <div className="w-full p-2">
-      {/* Party Header */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-xl">
+    <div className="w-full p-2" data-wizard-container>
+      {/* Compact Progress Header */}
+      <div className="bg-white border-4 border-black rounded-xl p-4 mb-6 shadow-xl">
         <div className="text-center mb-4">
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wide text-black drop-shadow-lg">
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black uppercase tracking-wide text-black">
             LET&apos;S PARTY!
           </h1>
-          <p className="text-xl font-bold text-gray-700 mt-2">
-            Time to plan your EPIC celebration!
+          <p className="text-sm md:text-lg lg:text-xl font-bold text-gray-700 mt-1">
+            Step {currentStep} of {totalSteps}: {stepTitles[currentStep - 1]}
           </p>
         </div>
 
-        <div className="flex items-center justify-center mb-4">
-          <Link
-            to="/collections/party-booking"
-            className="bg-[var(--color-brand-cream)] text-black font-bold px-6 py-3 rounded-full border-4 border-black hover:bg-[var(--color-brand-cream-hover)] hover:scale-105 transition-all duration-200 shadow-lg text-lg"
-          >
-            ← Change Party Date/Time
-          </Link>
-        </div>
-
-        <div className="bg-[var(--color-brand-cream)] border-4 border-black rounded-lg p-6 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-            <div className="bg-white border-2 border-black rounded-lg p-4">
-              <div className="text-2xl font-black text-black">{partyDate}</div>
-              <div className="text-xl font-bold text-black">{partyTime}</div>
-            </div>
-            <div className="bg-white border-2 border-black rounded-lg p-4">
-              <div className="text-2xl font-black text-black">{roomName}</div>
-              <div className="text-lg font-bold text-gray-700">
-                Park Hours: {parkHours}
+        {/* Progress Bar */}
+        <div className="mb-2">
+          <div className="flex justify-between items-center mb-2">
+            {stepTitles.map((title, index) => (
+              <div key={index} className={`text-xs font-bold text-center ${
+                index + 1 <= currentStep ? 'text-black' : 'text-gray-400'
+              }`}>
+                <div className={`w-6 h-6 rounded-full border-2 border-black flex items-center justify-center text-xs font-black mb-1 ${
+                  index + 1 <= currentStep ? 'bg-gray-900 text-white' : 'bg-gray-100'
+                }`}>
+                  {index + 1}
+                </div>
+                {/* Only show title on larger screens or current step */}
+                <div className={`w-12 text-xs leading-tight ${
+                  index + 1 === currentStep ? 'block' : 'hidden sm:block'
+                }`}>
+                  {title}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-          <div className="mt-4 bg-gray-100 border-2 border-black rounded-lg p-4">
+          <div className="w-full bg-gray-200 rounded-full h-2 border-2 border-black">
+            <div 
+              className="bg-gray-900 h-full rounded-full transition-all duration-300"
+              style={{width: `${(currentStep / totalSteps) * 100}%`}}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Step Content */}
+      {currentStep === 1 && (
+        <>
+          {/* Back to Date/Time Selection */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
             <div className="text-center">
-              <div className="text-lg font-black text-black">
-                Min: {roomDetails.minParticipants} people | $
-                {last3HoursInfo.isLast3Hours
-                  ? '18'
-                  : dateDetails.isWinter && roomDetails.room === 'Turning Point'
-                    ? '26'
-                    : dateDetails.isWinter
-                      ? '28'
-                      : roomDetails.baseRate}
-                /person
-              </div>
-              {last3HoursInfo.isLast3Hours && (
-                <div className="bg-green-100 border-2 border-black rounded-lg p-2 mt-2">
-                  <div className="text-lg font-black text-black">
-                    LAST 3 HOURS SPECIAL!
-                  </div>
-                  <div className="text-sm font-bold text-black">
-                    Guests cannot arrive until the last 3 hours begin
-                  </div>
-                </div>
-              )}
-              {!last3HoursInfo.isLast3Hours && dateDetails.isWinter && (
-                <div className="bg-blue-100 border-2 border-black rounded-lg p-2 mt-2">
-                  <div className="text-lg font-bold text-black">
-                    WINTER RATES
-                  </div>
-                </div>
-              )}
+              <Link
+                to="/collections/party-booking"
+                className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-black font-bold px-4 py-2 rounded-lg border-2 border-black transition-all duration-200 hover:scale-105"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Change Party Date/Time
+              </Link>
             </div>
           </div>
 
-          {dateDetails.isWater && (
-            <div className="mt-2 bg-blue-100 border-2 border-black rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-black">
-                Water rides may be open!
-              </div>
-              <div className="text-sm font-semibold text-black">
-                (weather permitting)
-              </div>
-            </div>
-          )}
-          {!dateDetails.isWater && (
-            <div className="mt-2 bg-gray-100 border-2 border-black rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-black">
-                Water rides closed this date
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 bg-yellow-100 border-3 border-black rounded-lg p-4 text-center">
-            <div className="text-2xl font-black text-black">
-              DEPOSIT DUE: ${depositDue?.toFixed(2)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Party Type selection */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          What Kind of AMAZING Party?
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            type="button"
-            onClick={() => setPartyType('Birthday')}
-            className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-              partyType === 'Birthday'
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            Birthday Party
-          </button>
-          <button
-            type="button"
-            onClick={() => setPartyType('Team')}
-            className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-              partyType === 'Team'
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            Team Party
-          </button>
-          <button
-            type="button"
-            onClick={() => setPartyType('Company')}
-            className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-              partyType === 'Company'
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            Company Party
-          </button>
-          <button
-            type="button"
-            onClick={() => setPartyType('Other')}
-            className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-              partyType === 'Other'
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            Other
-          </button>
-        </div>
-      </div>
-
-      {/* Birthday Party Info */}
-      {partyType === 'Birthday' && (
-        <div className="bg-gray-50 border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-          <h3 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-            Birthday Details!
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                Birthday Star&apos;s Name:
-                <input
-                  type="text"
-                  value={birthdayName}
-                  onChange={(e) => setBirthdayName(e.target.value)}
-                  className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                  placeholder="Enter their awesome name!"
-                />
-              </label>
-            </div>
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                Turning How Old?
-                <input
-                  type="number"
-                  value={birthdayAge}
-                  min={1}
-                  max={120}
-                  onChange={(e) => setBirthdayAge(e.target.value)}
-                  className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                  placeholder="Age"
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-      {partyType === 'Team' && (
-        <div className="bg-gray-50 border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-          <h3 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-            Team Details!
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                Team Name:
-              <input
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                placeholder="Enter team name"
-              />
-              </label>
-            </div>
-            
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                Sport or Activity:
-                <input
-                  type="text"
-                  value={teamActivity}
-                  onChange={(e) => setTeamActivity(e.target.value)}
-                  className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                  placeholder="What sport or activity?"
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-      {partyType === 'Company' && (
-        <div className="bg-gray-50 border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-          <h3 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-            Company Details!
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                Company Name:
-             
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                placeholder="Enter company name"
-              />
-               </label>
-            </div>
-          </div>
-        </div>
-      )}
-      {partyType === 'Other' && (
-        <div className="bg-gray-50 border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-          <h3 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-            Party Details!
-          </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-2xl font-black text-black mb-3">
-                What are you celebrating?
-              <input
-                type="text"
-                value={otherParty}
-                onChange={(e) => setOtherParty(e.target.value)}
-                className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                placeholder="Describe your celebration"
-              />
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Base Party Rate */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          Party Rate
-        </h2>
-        <div className="text-center">
-          <div className="bg-gray-100 border-4 border-black rounded-xl p-6 inline-block">
-            <div className="text-3xl font-black text-black">
-              $32 / Wristband
-            </div>
-            <input
-              type="radio"
-              name="baseRate"
-              value="$32 / Wristband"
-              checked
-              readOnly
-              className="sr-only"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Estimated Participants */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          How Many Guests?
-        </h2>
-        <div className="flex items-center justify-center gap-6">
-          <button
-            type="button"
-            onClick={() =>
-              setNumParticipants((prev) =>
-                Math.max(prev - 1, roomDetails.minParticipants),
-              )
-            }
-            className="text-4xl w-16 h-16 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-          >
-            −
-          </button>
-          <div className="text-center">
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={numParticipants}
-              onChange={(e) => setNumParticipants(Number(e.target.value))}
-              className="text-4xl font-black text-center w-32 px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-            />
-            <div className="text-lg font-bold text-gray-600 mt-2">
-              Participants
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setNumParticipants((prev) => Math.min(prev + 1, 100))
-            }
-            className="text-4xl w-16 h-16 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Food Options */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          Add Pizza to Your Party
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => setFoodOption('')}
-            className={`p-6 border-4 border-black rounded-xl font-bold text-xl transition-all duration-200 hover:scale-105 ${
-              foodOption === ''
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            No Pizza
-          </button>
-          <button
-            type="button"
-            onClick={() => setFoodOption('$7')}
-            className={`p-6 border-4 border-black rounded-xl font-bold text-xl transition-all duration-200 hover:scale-105 ${
-              foodOption === '$7'
-                ? 'bg-gray-900 text-white shadow-xl scale-105'
-                : 'bg-gray-100 text-black hover:bg-gray-200'
-            }`}
-          >
-            2 Slices Each
-            <div className="text-lg font-bold">+$7/Person</div>
-          </button>
-        </div>
-
-        {/* Show pizza type only if food option selected */}
-        {foodOption === '$7' && (
-          <div className="mt-8 bg-gray-50 border-4 border-black rounded-xl p-6">
-            <h3 className="text-2xl font-black uppercase text-center text-black mb-6 tracking-wide">
-              Choose Pizza Type
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Party Type selection */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              What Kind of Party?
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <button
                 type="button"
-                onClick={() => setPizzaType('Pepperoni')}
-                className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-                  pizzaType === 'Pepperoni'
+                onClick={() => setPartyType('Birthday')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm md:text-base transition-all duration-200 hover:scale-105 ${
+                  partyType === 'Birthday'
                     ? 'bg-gray-900 text-white shadow-xl scale-105'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
                 }`}
               >
-                Pepperoni
+                Birthday
               </button>
               <button
                 type="button"
-                onClick={() => setPizzaType('Cheese')}
-                className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-                  pizzaType === 'Cheese'
+                onClick={() => setPartyType('Team')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm md:text-base transition-all duration-200 hover:scale-105 ${
+                  partyType === 'Team'
                     ? 'bg-gray-900 text-white shadow-xl scale-105'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
                 }`}
               >
-                Cheese
+                Team
               </button>
               <button
                 type="button"
-                onClick={() => setPizzaType('1/2 Pepperoni 1/2 Cheese')}
-                className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-                  pizzaType === '1/2 Pepperoni 1/2 Cheese'
+                onClick={() => setPartyType('Company')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm md:text-base transition-all duration-200 hover:scale-105 ${
+                  partyType === 'Company'
                     ? 'bg-gray-900 text-white shadow-xl scale-105'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
                 }`}
               >
-                Half & Half
+                Company
+              </button>
+              <button
+                type="button"
+                onClick={() => setPartyType('Other')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm md:text-base transition-all duration-200 hover:scale-105 ${
+                  partyType === 'Other'
+                    ? 'bg-gray-900 text-white shadow-xl scale-105'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
+                }`}
+              >
+                Other
               </button>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Whole Pizza Ordering */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
-          Add Whole Pizzas
-        </h2>
-        <p className="text-lg text-gray-600 mb-6 text-center">
-          We recommend placing your pizza order at the time of booking to ensure
-          that it is served out in a timely manner on the day of your party.
-          However, this order can also be adjusted on the day of the party.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pepperoni Pizzas */}
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6 text-center">
-            <h3 className="text-2xl font-black text-black mb-4">Pepperoni</h3>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setWholePepperoniPizzas(Math.max(0, wholePepperoniPizzas - 1))
-                }
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                value={wholePepperoniPizzas}
-                onChange={(e) =>
-                  setWholePepperoniPizzas(
-                    Math.max(0, parseInt(e.target.value) || 0),
-                  )
-                }
-                className="text-2xl font-black text-center w-20 px-3 py-2 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                min="0"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setWholePepperoniPizzas(wholePepperoniPizzas + 1)
-                }
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                +
-              </button>
-            </div>
-            <div className="text-lg space-y-1">
-              <div className="text-2xl font-black text-black">$22.99 Each</div>
-              <div className="font-bold text-gray-600">16&quot; XL Pizza</div>
-              <div className="font-bold text-gray-600">10 Slices</div>
-            </div>
-          </div>
-
-          {/* Cheese Pizzas */}
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6 text-center">
-            <h3 className="text-2xl font-black text-black mb-4">Cheese</h3>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setWholeCheesePizzas(Math.max(0, wholeCheesePizzas - 1))
-                }
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                value={wholeCheesePizzas}
-                onChange={(e) =>
-                  setWholeCheesePizzas(
-                    Math.max(0, parseInt(e.target.value) || 0),
-                  )
-                }
-                className="text-2xl font-black text-center w-20 px-3 py-2 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                min="0"
-              />
-              <button
-                type="button"
-                onClick={() => setWholeCheesePizzas(wholeCheesePizzas + 1)}
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                +
-              </button>
-            </div>
-            <div className="text-lg space-y-1">
-              <div className="text-2xl font-black text-black">$19.99 Each</div>
-              <div className="font-bold text-gray-600">16&quot; XL Pizza</div>
-              <div className="font-bold text-gray-600">10 Slices</div>
-            </div>
-          </div>
-
-          {/* Half & Half Pizzas */}
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6 text-center">
-            <h3 className="text-2xl font-black text-black mb-4">Half & Half</h3>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setWholeHalfHalfPizzas(Math.max(0, wholeHalfHalfPizzas - 1))
-                }
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                value={wholeHalfHalfPizzas}
-                onChange={(e) =>
-                  setWholeHalfHalfPizzas(
-                    Math.max(0, parseInt(e.target.value) || 0),
-                  )
-                }
-                className="text-2xl font-black text-center w-20 px-3 py-2 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                min="0"
-              />
-              <button
-                type="button"
-                onClick={() => setWholeHalfHalfPizzas(wholeHalfHalfPizzas + 1)}
-                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-              >
-                +
-              </button>
-            </div>
-            <div className="text-lg space-y-1">
-              <div className="text-2xl font-black text-black">$22.99 Each</div>
-              <div className="font-bold text-gray-600">16&quot; XL Pizza</div>
-              <div className="font-bold text-gray-600">10 Slices</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Pitchers */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
-          Add Drink Pitchers
-        </h2>
-        <p className="text-lg text-gray-600 mb-6 text-center">
-          $7.99 Each and $4.99 Per Refill
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(drinkPitchers).map(([drinkName, quantity]) => (
-            <div
-              key={drinkName}
-              className="bg-gray-50 border-4 border-black rounded-xl p-6 text-center"
-            >
-              <h3 className="text-2xl font-black text-black mb-4">
-                {drinkName}
+          {/* Birthday Party Info */}
+          {partyType === 'Birthday' && (
+            <div className="bg-gray-50 border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+              <h3 className="text-lg md:text-2xl lg:text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
+                Birthday Details
               </h3>
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDrinkPitchers((prev) => ({
-                      ...prev,
-                      [drinkName]: Math.max(0, prev[drinkName] - 1),
-                    }))
-                  }
-                  className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) =>
-                    setDrinkPitchers((prev) => ({
-                      ...prev,
-                      [drinkName]: Math.max(0, parseInt(e.target.value) || 0),
-                    }))
-                  }
-                  className="text-2xl font-black text-center w-20 px-3 py-2 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
-                  min="0"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDrinkPitchers((prev) => ({
-                      ...prev,
-                      [drinkName]: prev[drinkName] + 1,
-                    }))
-                  }
-                  className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
-                >
-                  +
-                </button>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    Birthday Star&apos;s Name:
+                    <input
+                      type="text"
+                      value={birthdayName}
+                      onChange={(e) => setBirthdayName(e.target.value)}
+                      className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                      placeholder="Enter their name"
+                    />
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    Age:
+                    <input
+                      type="number"
+                      value={birthdayAge}
+                      min={1}
+                      max={120}
+                      onChange={(e) => setBirthdayAge(e.target.value)}
+                      className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                      placeholder="Age"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Drink Choices – up to 3 */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
-          Choose Your Drinks
-        </h2>
-        <p className="text-xl font-bold text-center text-gray-700 mb-6">
-          Pick up to 3 drinks - {drinkChoices.length}/3 selected
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            'Coke',
-            'Dr Pepper',
-            'Sprite',
-            'Hi‑C Pink Lemonade',
-            'Root Beer',
-            'Coke Zero',
-            'Sweet Tea',
-            'Unsweet Tea',
-            'Water Bottles',
-          ].map((drink) => (
-            <button
-              key={drink}
-              type="button"
-              onClick={() => toggleDrink(drink)}
-              disabled={
-                !drinkChoices.includes(drink) && drinkChoices.length >= 3
-              }
-              className={`p-4 border-4 border-black rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105 ${
-                drinkChoices.includes(drink)
-                  ? 'bg-gray-900 text-white shadow-xl scale-105'
-                  : 'bg-gray-100 text-black hover:bg-gray-200'
-              } ${!drinkChoices.includes(drink) && drinkChoices.length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {drink}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Contact Phone */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          Contact Information
-        </h2>
-        <div className="max-w-md mx-auto">
-          <label className="block text-2xl font-black text-black mb-3">
-            Phone Number:
-          
-          <input
-            type="tel"
-            value={contactPhone}
-            onChange={(e) => setContactPhone(formatPhoneNumber(e.target.value))}
-            className="w-full text-2xl font-bold px-6 py-4 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg text-center"
-            placeholder="(555) 555-5555"
-          />
-          </label>
-        </div>
-      </div>
-
-      {/* Acknowledgements */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          Important Information
-        </h2>
-        <div className="space-y-6">
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6">
-            <label className="flex items-start gap-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ackList}
-                onChange={() => setAckList(!ackList)}
-                className="mt-1 w-6 h-6 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
-              />
-              <div className="text-lg font-semibold text-black">
-                <strong>Guest List Required:</strong> On the day of your party,
-                please bring in a list of names for those who you would like to
-                receive a wristband. This list should include all children ages
-                3‑15 who have been invited. Adults (16+) are free to enter the
-                park, and only need to be included if you would like to purchase
-                wristbands for them to play games and ride rides.
+          )}
+          {partyType === 'Team' && (
+            <div className="bg-gray-50 border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+              <h3 className="text-lg md:text-2xl lg:text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
+                Team Details
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    Team Name:
+                  <input
+                    type="text"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                    placeholder="Enter team name"
+                  />
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    Sport or Activity:
+                    <input
+                      type="text"
+                      value={teamActivity}
+                      onChange={(e) => setTeamActivity(e.target.value)}
+                      className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                      placeholder="What sport or activity?"
+                    />
+                  </label>
+                </div>
               </div>
-            </label>
+            </div>
+          )}
+          {partyType === 'Company' && (
+            <div className="bg-gray-50 border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+              <h3 className="text-lg md:text-2xl lg:text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
+                Company Details
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    Company Name:
+                 
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                    placeholder="Enter company name"
+                  />
+                   </label>
+                </div>
+              </div>
+            </div>
+          )}
+          {partyType === 'Other' && (
+            <div className="bg-gray-50 border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+              <h3 className="text-lg md:text-2xl lg:text-3xl font-black uppercase text-center text-black mb-4 tracking-wide">
+                Party Details
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-base md:text-lg lg:text-xl font-black text-black mb-2">
+                    What are you celebrating?
+                  <input
+                    type="text"
+                    value={otherParty}
+                    onChange={(e) => setOtherParty(e.target.value)}
+                    className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                    placeholder="Describe your celebration"
+                  />
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {currentStep === 2 && (
+        <>
+          {/* Party Rate Info */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-3 tracking-wide">
+              Party Rate: $32/Wristband
+            </h2>
+            <div className="bg-gray-50 border-2 border-black rounded-lg p-3 mb-4">
+              <h3 className="text-base font-black text-black mb-2">What's Included:</h3>
+              <ul className="text-sm text-black space-y-1">
+                <li>• Unlimited wristband valid for entire operating day</li>
+                <li>• All video games, rides, and attractions</li>
+                <li>• One medium drink per person</li>
+              </ul>
+            </div>
+            <div className="bg-blue-50 border-2 border-black rounded-lg p-3">
+              <h3 className="text-base font-black text-black mb-2">Who Needs Wristbands:</h3>
+              <ul className="text-sm text-black space-y-1">
+                <li>• <strong>Kids ages 3-15:</strong> Must be included in party package</li>
+                <li>• <strong>Adults (16+):</strong> Free to enter, or can be added at same rate</li>
+                <li>• <strong>Children 2 and under:</strong> Free, or can be included if 36" tall</li>
+              </ul>
+            </div>
           </div>
 
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6">
-            <label className="flex items-start gap-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ackSocks}
-                onChange={() => setAckSocks(!ackSocks)}
-                className="mt-1 w-6 h-6 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
-              />
-              <div className="text-lg font-semibold text-black">
-                <strong>Socks Required:</strong> Some attractions at ZDT&apos;s
-                require socks to participate. Please remind all of your guests
-                to make sure to bring socks if they wish to participate in these
-                attractions!
+          {/* Estimated Participants */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              How Many Participants?
+            </h2>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setNumParticipants((prev) =>
+                    Math.max(prev - 1, roomDetails.minParticipants),
+                  )
+                }
+                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
+              >
+                −
+              </button>
+              <div className="text-center">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={numParticipants}
+                  onChange={(e) => setNumParticipants(Number(e.target.value))}
+                  className="text-2xl font-black text-center w-24 px-3 py-2 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg"
+                />
               </div>
-            </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setNumParticipants((prev) => Math.min(prev + 1, 100))
+                }
+                className="text-2xl w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 border-4 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110 shadow-lg"
+              >
+                +
+              </button>
+            </div>
+            <div className="text-center mt-3 text-sm font-bold text-gray-600">
+              Minimum: {roomDetails.minParticipants} people required
+            </div>
+          </div>
+        </>
+      )}
+
+      {currentStep === 3 && (
+        <>
+          {/* Food Options */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              Pizza Options
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFoodOption('')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 ${
+                  foodOption === ''
+                    ? 'bg-gray-900 text-white shadow-xl scale-105'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
+                }`}
+              >
+                No Pizza
+              </button>
+              <button
+                type="button"
+                onClick={() => setFoodOption('$7')}
+                className={`p-3 border-4 border-black rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 ${
+                  foodOption === '$7'
+                    ? 'bg-gray-900 text-white shadow-xl scale-105'
+                    : 'bg-gray-100 text-black hover:bg-gray-200'
+                }`}
+              >
+                {roomName && (roomName.includes('Midway') || roomName.includes('Turning')) 
+                  ? '2 Slices + Drink Each' 
+                  : '2 Slices Each'}
+                <div className="text-xs font-bold">+$7/Person</div>
+              </button>
+            </div>
+
+            {/* Show pizza type only if food option selected */}
+            {foodOption === '$7' && (
+              <div className="mt-4 bg-gray-50 border-2 border-black rounded-xl p-3">
+                <h3 className="text-base font-black uppercase text-center text-black mb-3 tracking-wide">
+                  Pizza Type
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPizzaType('Pepperoni')}
+                    className={`p-2 border-2 border-black rounded-lg font-bold text-xs transition-all duration-200 hover:scale-105 ${
+                      pizzaType === 'Pepperoni'
+                        ? 'bg-gray-900 text-white shadow-xl scale-105'
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                  >
+                    Pepperoni
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPizzaType('Cheese')}
+                    className={`p-2 border-2 border-black rounded-lg font-bold text-xs transition-all duration-200 hover:scale-105 ${
+                      pizzaType === 'Cheese'
+                        ? 'bg-gray-900 text-white shadow-xl scale-105'
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                  >
+                    Cheese
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPizzaType('1/2 Pepperoni 1/2 Cheese')}
+                    className={`p-2 border-2 border-black rounded-lg font-bold text-xs transition-all duration-200 hover:scale-105 ${
+                      pizzaType === '1/2 Pepperoni 1/2 Cheese'
+                        ? 'bg-gray-900 text-white shadow-xl scale-105'
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                  >
+                    Half & Half
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="bg-gray-50 border-4 border-black rounded-xl p-6">
-            <label className="flex items-start gap-4 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ackEmail}
-                onChange={() => setAckEmail(!ackEmail)}
-                className="mt-1 w-6 h-6 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
-              />
-              <div className="text-lg font-semibold text-black">
-                <strong>Email Confirmation:</strong> After checkout, you should
-                receive an email confirmation to confirm your booking has gone
-                through. Please be sure the email address entered at checkout is
-                correct.
+          {/* Drink Choices – up to 3 - For Carousel/Large rooms always, or Midway/Turning when pizza is selected */}
+          {roomName && (
+            (!roomName.includes('Midway') && !roomName.includes('Turning')) || 
+            ((roomName.includes('Midway') || roomName.includes('Turning')) && foodOption === '$7')
+          ) && (
+            <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+              <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-2 tracking-wide">
+                Choose Drinks
+              </h2>
+              <p className="text-sm font-bold text-center text-gray-700 mb-3">
+                Pick up to 3 drinks
+              </p>
+              <div className="bg-blue-50 border-2 border-black rounded-lg p-3 mb-4">
+                <p className="text-xs text-black text-center">
+                  {roomName && (roomName.includes('Midway') || roomName.includes('Turning'))
+                    ? 'One medium drink per participant is included with your pizza selection!'
+                    : 'One medium drink per participant is included in your party rate!'}
+                </p>
               </div>
-            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                'Coke',
+                'Dr Pepper',
+                'Sprite',
+                'Hi‑C Pink Lemonade',
+                'Root Beer',
+                'Coke Zero',
+                'Sweet Tea',
+                'Unsweet Tea',
+                'Water Bottles',
+              ].map((drink) => (
+                <button
+                  key={drink}
+                  type="button"
+                  onClick={() => toggleDrink(drink)}
+                  disabled={
+                    !drinkChoices.includes(drink) && drinkChoices.length >= 3
+                  }
+                  className={`p-2 border-2 border-black rounded-lg font-bold text-xs transition-all duration-200 hover:scale-105 ${
+                    drinkChoices.includes(drink)
+                      ? 'bg-gray-900 text-white shadow-xl scale-105'
+                      : 'bg-gray-100 text-black hover:bg-gray-200'
+                  } ${!drinkChoices.includes(drink) && drinkChoices.length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {drink}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+          )}
+        </>
+      )}
 
+      {currentStep === 4 && (
+        <>
+          {/* Whole Pizza Ordering */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-2 tracking-wide">
+              Extra Whole Pizzas
+            </h2>
+            <div className="bg-yellow-50 border-2 border-black rounded-lg p-3 mb-4">
+              <p className="text-xs text-black text-center">
+                <strong>Optional:</strong> We recommend placing your pizza order now to ensure timely service on party day. Orders can be adjusted on the day of your party.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Pepperoni Pizzas */}
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3 text-center">
+                <h3 className="text-sm font-black text-black mb-2">Pepperoni</h3>
+                <div className="flex items-center justify-center gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWholePepperoniPizzas(Math.max(0, wholePepperoniPizzas - 1))
+                    }
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={wholePepperoniPizzas}
+                    onChange={(e) =>
+                      setWholePepperoniPizzas(
+                        Math.max(0, parseInt(e.target.value) || 0),
+                      )
+                    }
+                    className="text-sm font-black text-center w-10 px-1 py-1 rounded border-2 border-black focus:ring-2 focus:ring-yellow-300"
+                    min="0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWholePepperoniPizzas(wholePepperoniPizzas + 1)
+                    }
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-xs">
+                  <div className="font-black text-black">$22.99</div>
+                  <div className="font-bold text-gray-600">16" XL</div>
+                </div>
+              </div>
+
+              {/* Cheese Pizzas */}
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3 text-center">
+                <h3 className="text-sm font-black text-black mb-2">Cheese</h3>
+                <div className="flex items-center justify-center gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWholeCheesePizzas(Math.max(0, wholeCheesePizzas - 1))
+                    }
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={wholeCheesePizzas}
+                    onChange={(e) =>
+                      setWholeCheesePizzas(
+                        Math.max(0, parseInt(e.target.value) || 0),
+                      )
+                    }
+                    className="text-sm font-black text-center w-10 px-1 py-1 rounded border-2 border-black focus:ring-2 focus:ring-yellow-300"
+                    min="0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setWholeCheesePizzas(wholeCheesePizzas + 1)}
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-xs">
+                  <div className="font-black text-black">$19.99</div>
+                  <div className="font-bold text-gray-600">16" XL</div>
+                </div>
+              </div>
+
+              {/* Half & Half Pizzas */}
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3 text-center">
+                <h3 className="text-sm font-black text-black mb-2">Half & Half</h3>
+                <div className="flex items-center justify-center gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWholeHalfHalfPizzas(Math.max(0, wholeHalfHalfPizzas - 1))
+                    }
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={wholeHalfHalfPizzas}
+                    onChange={(e) =>
+                      setWholeHalfHalfPizzas(
+                        Math.max(0, parseInt(e.target.value) || 0),
+                      )
+                    }
+                    className="text-sm font-black text-center w-10 px-1 py-1 rounded border-2 border-black focus:ring-2 focus:ring-yellow-300"
+                    min="0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setWholeHalfHalfPizzas(wholeHalfHalfPizzas + 1)}
+                    className="text-base w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-xs">
+                  <div className="font-black text-black">$22.99</div>
+                  <div className="font-bold text-gray-600">16" XL</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Add Pitchers */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-2 tracking-wide">
+              Drink Pitchers
+            </h2>
+            <p className="text-xs text-gray-600 mb-4 text-center">
+              $7.99 Each • $4.99 Refills
+            </p>
+            <p className="text-xs text-black text-center">
+              One medium drink per participant is already included in your party rate! If ordered, pitchers are for additional drinks or refills.
+            </p>
+            <br/>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(drinkPitchers).map(([drinkName, quantity]) => (
+                <div
+                  key={drinkName}
+                  className="bg-gray-50 border-2 border-black rounded-lg p-2 text-center"
+                >
+                  <h3 className="text-xs font-black text-black mb-2">
+                    {drinkName}
+                  </h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDrinkPitchers((prev) => ({
+                          ...prev,
+                          [drinkName]: Math.max(0, prev[drinkName] - 1),
+                        }))
+                      }
+                      className="text-sm w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) =>
+                        setDrinkPitchers((prev) => ({
+                          ...prev,
+                          [drinkName]: Math.max(0, parseInt(e.target.value) || 0),
+                        }))
+                      }
+                      className="text-xs font-black text-center w-10 px-1 py-1 rounded border-2 border-black focus:ring-2 focus:ring-yellow-300"
+                      min="0"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDrinkPitchers((prev) => ({
+                          ...prev,
+                          [drinkName]: prev[drinkName] + 1,
+                        }))
+                      }
+                      className="text-sm w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-black flex items-center justify-center font-black transition-all duration-200 hover:scale-110"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {currentStep === 5 && (
+        <>
+          {/* Contact Phone */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              Contact Info
+            </h2>
+            <div className="max-w-md mx-auto">
+              <label className="block text-base font-black text-black mb-2">
+                Phone Number:
+              
+              <input
+                type="tel"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(formatPhoneNumber(e.target.value))}
+                className="w-full text-base font-bold px-4 py-3 rounded-xl border-4 border-black focus:ring-4 focus:ring-yellow-300 transition-all duration-200 shadow-lg text-center"
+                placeholder="(555) 555-5555"
+              />
+              </label>
+            </div>
+          </div>
+
+          {/* Acknowledgements */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              Important Info
+            </h2>
+            
+            {/* Deposit Info */}
+            <div className="bg-green-50 border-2 border-black rounded-lg p-3 mb-4">
+              <h3 className="text-base font-black text-black mb-2">Booking Details:</h3>
+              <ul className="text-sm text-black space-y-1">
+                <li>• <strong>Non-refundable $60 deposit</strong> due at booking</li>
+                <li>• Remaining balance paid day of party based on actual attendance</li>
+                <li>• Minimum of {roomDetails.minParticipants} participants required</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ackList}
+                    onChange={() => setAckList(!ackList)}
+                    className="mt-1 w-5 h-5 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
+                  />
+                  <div className="text-sm font-semibold text-black">
+                    <strong>Guest List Required:</strong> On the day of your party, please bring a list of names for those who you would like to receive a wristband. This list should include all children ages 3‑15 who have been invited. Adults (16+) are free to enter the park, and only need to be included if you would like to purchase wristbands for them to play games and ride rides.
+                  </div>
+                </label>
+              </div>
+
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ackSocks}
+                    onChange={() => setAckSocks(!ackSocks)}
+                    className="mt-1 w-5 h-5 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
+                  />
+                  <div className="text-sm font-semibold text-black">
+                    <strong>Socks Required:</strong> Some attractions at ZDT's require socks to participate. Please remind all of your guests to make sure to bring socks if they wish to participate in these attractions!
+                  </div>
+                </label>
+              </div>
+
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ackEmail}
+                    onChange={() => setAckEmail(!ackEmail)}
+                    className="mt-1 w-5 h-5 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
+                  />
+                  <div className="text-sm font-semibold text-black">
+                    <strong>Email Confirmation:</strong> After checkout, you should receive an email confirmation to confirm your booking has gone through. Please be sure the email address entered at checkout is correct.
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {currentStep === 6 && (
+        <>
+          {/* Review Summary */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
+              Party Summary
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
+                <h3 className="text-base font-black text-black mb-2">Party Details</h3>
+                <div className="space-y-1 text-sm">
+                  <div><strong>Type:</strong> {partyType}</div>
+                  {partyType === 'Birthday' && (
+                    <>
+                      <div><strong>Name:</strong> {birthdayName}</div>
+                      <div><strong>Age:</strong> {birthdayAge}</div>
+                    </>
+                  )}
+                  {partyType === 'Team' && (
+                    <>
+                      <div><strong>Team:</strong> {teamName}</div>
+                      <div><strong>Activity:</strong> {teamActivity}</div>
+                    </>
+                  )}
+                  {partyType === 'Company' && <div><strong>Company:</strong> {companyName}</div>}
+                  {partyType === 'Other' && <div><strong>Details:</strong> {otherParty}</div>}
+                  <div><strong>Participants:</strong> {numParticipants}</div>
+                  <div><strong>Phone:</strong> {contactPhone}</div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
+                <h3 className="text-base font-black text-black mb-2">Food & Drinks</h3>
+                <div className="space-y-1 text-sm">
+                  <div><strong>Pizza:</strong> {foodOption ? `2 slices each (${pizzaType})` : 'None'}</div>
+                  <div><strong>Drinks:</strong> {drinkChoices.join(', ') || 'None selected'}</div>
+                  {(wholePepperoniPizzas > 0 || wholeCheesePizzas > 0 || wholeHalfHalfPizzas > 0) && (
+                    <div className="mt-1">
+                      <strong>Whole Pizzas:</strong>
+                      {wholePepperoniPizzas > 0 && <div>• {wholePepperoniPizzas} Pepperoni</div>}
+                      {wholeCheesePizzas > 0 && <div>• {wholeCheesePizzas} Cheese</div>}
+                      {wholeHalfHalfPizzas > 0 && <div>• {wholeHalfHalfPizzas} Half & Half</div>}
+                    </div>
+                  )}
+                  {Object.entries(drinkPitchers).some(([, qty]) => qty > 0) && (
+                    <div className="mt-1">
+                      <strong>Pitchers:</strong>
+                      {Object.entries(drinkPitchers).map(([drink, qty]) => 
+                        qty > 0 && <div key={drink}>• {qty} {drink}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cost Estimator */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
+            <h2 className="text-xl md:text-3xl lg:text-4xl font-black uppercase text-center text-black mb-6 tracking-wide">
+              Cost Summary
+            </h2>
+
+            {/* Itemized breakdown */}
+            <div className="space-y-3">
+              {estimatedCost.itemizedCosts.map((item, index) => (
+                <div key={index} className="flex justify-between items-center text-sm md:text-lg lg:text-xl font-bold bg-gray-50 border-2 border-gray-300 rounded-lg p-3 md:p-4">
+                  <div className="flex flex-col">
+                    <span className="font-black">{item.name}</span>
+                    <span className="text-xs md:text-sm text-gray-600 font-normal">
+                      {item.quantity} × ${item.price.toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="font-black">${item.total.toFixed(2)}</span>
+                </div>
+              ))}
+              
+              {/* Subtotal */}
+              <div className="border-t-2 border-black pt-2 mt-4">
+                <div className="flex justify-between items-center text-base md:text-xl lg:text-2xl font-bold bg-gray-100 border-2 border-black rounded-lg p-3 md:p-4">
+                  <span>Subtotal:</span>
+                  <span>${estimatedCost.subtotal.toFixed(2)}</span>
+                </div>
+              </div>
+              
+              {/* Tax */}
+              <div className="flex justify-between items-center text-base md:text-xl lg:text-2xl font-bold bg-gray-100 border-2 border-black rounded-lg p-3 md:p-4">
+                <span>Tax (8.25%):</span>
+                <span>${estimatedCost.tax.toFixed(2)}</span>
+              </div>
+              
+              {/* Total */}
+              <div className="flex justify-between items-center text-lg md:text-2xl lg:text-3xl font-black bg-yellow-100 border-4 border-black rounded-lg p-4 md:p-5">
+                <span>Total Cost:</span>
+                <span>${estimatedCost.total.toFixed(2)}</span>
+              </div>
+              
+              {/* Deposit */}
+              <div className="flex justify-between items-center text-lg md:text-2xl lg:text-3xl font-black bg-green-100 border-4 border-black rounded-lg p-4 md:p-5">
+                <span>Deposit Due Now:</span>
+                <span>
+                  ${Number(selectedVariant?.price?.amount || 0).toFixed(2)}
+                </span>
+              </div>
+              
+              {/* Balance */}
+              <div className="flex justify-between items-center text-base md:text-xl lg:text-2xl font-bold bg-blue-100 border-2 border-black rounded-lg p-3 md:p-4">
+                <span>Balance Due on Party Day:</span>
+                <span>
+                  $
+                  {Math.max(
+                    0,
+                    estimatedCost.total -
+                      Number(selectedVariant?.price?.amount || 0),
+                  ).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-gray-50 border-2 border-black rounded-lg p-3">
+              <p className="text-xs font-semibold text-gray-700 text-center">
+                Amounts are estimates. Final pricing may vary based on actual attendance and day-of purchases.
+              </p>
+            </div>
+          </div>
+
+          {/* Continue to Checkout Button */}
+          <div className="bg-white border-4 border-black rounded-xl p-4 shadow-xl">
+            <div className="text-center mb-4">
+              <h2 className="text-xl md:text-2xl font-black uppercase text-black mb-1 tracking-wide">
+                Ready to Book?
+              </h2>
+              <p className="text-sm font-bold text-gray-700">
+                Complete booking and pay deposit
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <AddToCartButton
+                disabled={!selectedVariant || !isFormValid()}
+                onClick={() => {
+                  if (validateForm()) {
+                    open('cart');
+                  }
+                }}
+                lines={createCartLine()}
+              >
+                Continue to Checkout
+              </AddToCartButton>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Error Display */}
       {formError && (
         <div className="bg-red-100 border-4 border-red-500 rounded-xl p-6 mb-8 shadow-lg">
           <div className="text-2xl font-black text-red-800 text-center">
@@ -1199,97 +1434,30 @@ export function PartyForm({
         </div>
       )}
 
-      {/* Cost Estimator */}
-      <div className="bg-white border-4 border-black rounded-xl p-6 mb-8 shadow-lg">
-        <h2 className="text-3xl font-black uppercase text-center text-black mb-6 tracking-wide">
-          Cost Breakdown
-        </h2>
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center mt-8">
+        <button
+          type="button"
+          onClick={prevStep}
+          disabled={currentStep === 1}
+          className={`px-8 py-4 rounded-xl font-black text-xl border-4 border-black transition-all duration-200 ${
+            currentStep === 1
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-100 text-black hover:bg-gray-200 hover:scale-105 shadow-lg'
+          }`}
+        >
+          ← Back
+        </button>
 
-        {/* Itemized costs */}
-        <div className="bg-gray-50 border-4 border-black rounded-xl p-6 mb-6">
-          <div className="space-y-3">
-            {estimatedCost.itemizedCosts.map((item) => (
-              <div
-                key={item.name}
-                className="flex justify-between items-center text-lg font-bold"
-              >
-                <span className="text-black">
-                  {item.name} x {item.quantity}
-                </span>
-                <span className="text-black">${item.total.toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Totals */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center text-xl font-bold bg-gray-100 border-2 border-black rounded-lg p-4">
-            <span>Subtotal:</span>
-            <span>${estimatedCost.subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center text-xl font-bold bg-gray-100 border-2 border-black rounded-lg p-4">
-            <span>Sales Tax (8.25%):</span>
-            <span>${estimatedCost.tax.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center text-2xl font-black bg-yellow-100 border-4 border-black rounded-lg p-6">
-            <span>Total Estimated Cost:</span>
-            <span>${estimatedCost.total.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center text-2xl font-black bg-green-100 border-4 border-black rounded-lg p-6">
-            <span>Deposit Due at Booking:</span>
-            <span>
-              ${Number(selectedVariant?.price?.amount || 0).toFixed(2)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-xl font-bold bg-blue-100 border-2 border-black rounded-lg p-4">
-            <span>Balance Due on Party Day:</span>
-            <span>
-              $
-              {Math.max(
-                0,
-                estimatedCost.total -
-                  Number(selectedVariant?.price?.amount || 0),
-              ).toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-6 bg-gray-50 border-2 border-black rounded-lg p-4">
-          <p className="text-sm font-semibold text-gray-700 text-center">
-            Please note that amounts displayed are estimates based on
-            information provided and are not guaranteed. Final pricing may vary
-            based on actual party attendance, additional purchases, taxes, and
-            other factors on the day of the event.
-          </p>
-        </div>
-      </div>
-
-      {/* Continue to Checkout Button */}
-      <div className="bg-white border-4 border-black rounded-xl p-8 shadow-xl">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-black uppercase text-black mb-2 tracking-wide">
-            Ready to Book Your Party?
-          </h2>
-          <p className="text-lg font-bold text-gray-700">
-            Complete your booking and pay your deposit
-          </p>
-        </div>
-        <div className="flex justify-center">
-          <div className="bg-gray-900 hover:bg-gray-800 text-white font-black text-2xl px-12 py-6 rounded-xl border-4 border-black shadow-xl hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
-            <AddToCartButton
-              disabled={!selectedVariant || !isFormValid()}
-              onClick={() => {
-                if (validateForm()) {
-                  open('cart');
-                }
-              }}
-              lines={createCartLine()}
-            >
-              Continue to Checkout
-            </AddToCartButton>
-          </div>
-        </div>
+        {currentStep < totalSteps ? (
+          <button
+            type="button"
+            onClick={nextStep}
+            className="px-8 py-4 rounded-xl font-black text-xl border-4 border-black bg-gray-900 text-white hover:bg-gray-800 hover:scale-105 transition-all duration-200 shadow-lg"
+          >
+            Continue →
+          </button>
+        ) : null}
       </div>
     </div>
   );

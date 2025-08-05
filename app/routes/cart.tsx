@@ -31,7 +31,31 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   switch (action) {
     case CartForm.ACTIONS.LinesAdd:
-      result = await cart.addLines(inputs.lines);
+      const linesToAdd = inputs.lines;
+      
+      // Check if we're adding party items (they have 'Party Type' attribute)
+      const partyLines = linesToAdd.filter(line => 
+        line.attributes?.some(attr => attr.key === 'Party Type')
+      );
+      
+      if (partyLines.length > 0) {
+        // Create a new cart with just the party items (this clears the old cart)
+        console.log('Creating new cart for party booking');
+        
+        // Clean the input data for cart.create - remove fields that aren't part of CartLineInput
+        const cleanedLines = linesToAdd.map(line => ({
+          merchandiseId: line.merchandiseId,
+          quantity: line.quantity,
+          attributes: line.attributes,
+        }));
+        
+        result = await cart.create({
+          lines: cleanedLines,
+        });
+      } else {
+        // Regular add lines for non-party items
+        result = await cart.addLines(linesToAdd);
+      }
       break;
     case CartForm.ACTIONS.LinesUpdate:
       result = await cart.updateLines(inputs.lines);
@@ -115,3 +139,4 @@ export default function Cart() {
     </div>
   );
 }
+

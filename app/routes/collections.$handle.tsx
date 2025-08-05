@@ -10,6 +10,7 @@ import type {ProductItemCollectionHandleFragment} from 'storefrontapi.generated'
 import {useVariantUrl} from '~/lib/variants';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import PartyCalendar from '~/components/PartyCalendar';
+import { AnimatedBackground } from '~/components/AnimatedBackground';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   return [{title: `Hydrogen | ${data?.collection.title ?? ''} Collection`}];
@@ -77,31 +78,11 @@ export default function Collection() {
 
   return (
     <div className="relative flex flex-col items-center px-4 py-10 bg-[var(--color-brand-green)] text-[var(--color-dark)] overflow-hidden min-h-screen">
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex flex-col items-center">
-        {[...Array(30)].map((_, idx) => (
-          <div
-            key={collectionTitle + idx}
-            className={`flex whitespace-nowrap text-5xl md:text-8xl font-extrabold leading-none ${
-              idx % 2 === 0
-                ? 'animate-[scroll-left_linear_infinite]'
-                : 'animate-[scroll-right_linear_infinite]'
-            } ${idx % 2 === 0 ? 'opacity-10' : 'opacity-25'} text-[var(--color-brand-yellow)]`}
-            style={{
-              animationDuration: `${30 + idx * 5}s`,
-              animationTimingFunction: 'linear',
-              animationIterationCount: 'infinite',
-            }}
-          >
-            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
-            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
-            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
-            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
-            {collectionTitle}&nbsp;{collectionTitle}&nbsp;{collectionTitle}
-            &nbsp;{collectionTitle}&nbsp;{collectionTitle}&nbsp;
-            {collectionTitle}&nbsp;
-          </div>
-        ))}
-      </div>
+      <AnimatedBackground 
+        text={collectionTitle.toUpperCase()} 
+        textColor="text-[var(--color-brand-yellow)]" 
+        opacity="opacity-10"
+      />
       {collection.title === 'Party Rooms' && (
         <PartyCalendar products={collection.products.nodes} />
       )}

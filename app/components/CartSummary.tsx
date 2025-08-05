@@ -12,11 +12,17 @@ type CartSummaryProps = {
 export function CartSummary({cart, layout}: CartSummaryProps) {
   const className = 'bg-white p-6 border border-black rounded shadow mt-6';
 
-  const estimatedTaxRate = 0.0825; // 8.25% for Texas
   const estimatedTax = useMemo(() => {
-    const total = parseFloat(cart.cost?.totalAmount?.amount || '0');
-    return total * estimatedTaxRate;
-  }, [cart.cost?.totalAmount?.amount]);
+    // Only show estimated tax if Shopify hasn't calculated it
+    const shopifyCalculatedTax = parseFloat(cart.cost?.totalTaxAmount?.amount || '0');
+    
+    if (shopifyCalculatedTax > 0) {
+      return shopifyCalculatedTax;
+    }
+    
+    // Don't show estimated tax if no Shopify calculation is available
+    return 0;
+  }, [cart.cost?.totalTaxAmount?.amount]);
 
   const estimatedDiscounts = useMemo(() => {
     const subtotal = parseFloat(cart.cost?.subtotalAmount?.amount || '0');

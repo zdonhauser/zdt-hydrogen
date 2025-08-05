@@ -115,7 +115,16 @@ export default function PartyCalendar({products}: {products: any[]}) {
               return (
                 <button
                   key={idx}
-                  onClick={() => setSelectedDate(dateKey)}
+                  onClick={() => {
+                    setSelectedDate(dateKey);
+                    // Scroll to room times section after a brief delay
+                    setTimeout(() => {
+                      const roomSection = document.querySelector('[data-room-times]');
+                      if (roomSection) {
+                        roomSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                   className={`h-10 sm:h-20 flex flex-col items-center justify-center border-2 rounded-lg ${
                     exists
                       ? selectedDate === dateKey
@@ -137,7 +146,7 @@ export default function PartyCalendar({products}: {products: any[]}) {
         </div>
 
         {selectedDate && (
-          <>
+          <div data-room-times>
             <h2 className="text-3xl font-extrabold mb-8 text-center">
               Available Party Rooms for{' '}
               {availableDates[selectedDate]?.[0]?.date.toLocaleDateString(
@@ -206,7 +215,7 @@ export default function PartyCalendar({products}: {products: any[]}) {
                             slot.availableForSale ? (
                               <Link
                                 key={slot.variantId}
-                                to={`/products/${slot.handle}`}
+                                to={`/products/${slot.handle}?Party+Room=${encodeURIComponent(room)}&Room+Time=${encodeURIComponent(slot.timeSlot)}`}
                                 className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] hover:scale-120 text-[var(--color-dark)] font-bold px-3 py-2 rounded-full border-2 border-[var(--color-dark)] text-sm shadow-md"
                               >
                                 {slot.timeSlot}
@@ -226,7 +235,7 @@ export default function PartyCalendar({products}: {products: any[]}) {
                   );
                 })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
