@@ -1,5 +1,5 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import { useLoaderData, type MetaFunction } from 'react-router';
+import {useLoaderData, type MetaFunction} from 'react-router';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -39,15 +39,20 @@ async function loadCriticalData({
 
   if (!handle) throw new Error('Expected product handle to be defined');
 
-  const [{product}] = await Promise.all([
+  const [{product}, {metaobjects}] = await Promise.all([
     storefront.query(PRODUCT_QUERY, {
       variables: {handle, selectedOptions: getSelectedProductOptions(request)},
     }),
+    storefront.query(HOURS_QUERY),
   ]);
 
   if (!product?.id) throw new Response(null, {status: 404});
 
-  return {product};
+  // Process hours data like in pages.hours.tsx
+  const node = metaobjects?.edges?.[0]?.node;
+  const hoursData = node?.hours?.value ? JSON.parse(node.hours.value) : {};
+
+  return {product, hoursData};
 }
 
 function loadDeferredData({context, params}: LoaderFunctionArgs) {
@@ -58,6 +63,7 @@ export default function Product() {
   const data = useLoaderData<typeof loader>();
 
   const product = data?.product;
+  const hoursData = data?.hoursData;
   const isPartyProduct = product?.tags?.includes('partydeposit');
 
   // Always safe fallback
@@ -85,45 +91,52 @@ export default function Product() {
 
   return (
     <div className="w-full px-4 py-12 md:py-20 bg-yellow-50 text-black font-sans">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      <div className="max-w-6xl mx-auto">
         {availableForPurchase && (
           <>
-            <div className="w-full">
-              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
-                {title}
-              </h1>
-              <ProductImage image={selectedVariant?.image} />
-              <div
-                className="prose max-w-none text-lg leading-relaxed overflow-hidden"
-                dangerouslySetInnerHTML={{__html: descriptionHtml}}
-              />
-            </div>
-            <div className="flex flex-col justify-start gap-6 p-4">
-              {/*
-              <div className="bg-yellow-300 text-black text-xl font-extrabold px-4 py-2 rounded shadow-md w-fit">
-                <ProductPrice
-                  price={selectedVariant?.price}
-                  compareAtPrice={selectedVariant?.compareAtPrice}
-                />
-              </div>
-              */}
+            {/* Product title only */}
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-tight drop-shadow-md mb-8 text-center">
+              {title}
+            </h1>
+
+            {/* Main product container with image and form integrated */}
+            <div className="bg-white border-4 border-black rounded-lg shadow-xl overflow-hidden">
               {isPartyProduct && (
-                <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
-                  <PartyForm
-                    productOptions={productOptions}
-                    selectedVariant={selectedVariant}
-                    tags={product.tags}
-                    product={product}
-                  />
+                <div className="grid grid-cols-1 gap-0">
+                  <div className="p-8">
+                    <div className="w-1/3 mx-auto mb-6">
+                      <ProductImage image={selectedVariant?.image} />
+                    </div>
+                    <div
+                      className="prose prose-sm mt-4 text-sm leading-relaxed text-center mb-6"
+                      dangerouslySetInnerHTML={{__html: descriptionHtml}}
+                    />
+                    <PartyForm
+                      productOptions={productOptions}
+                      selectedVariant={selectedVariant}
+                      tags={product.tags}
+                      product={product}
+                      hoursData={hoursData}
+                    />
+                  </div>
                 </div>
               )}
               {!isPartyProduct && (
-                <div className="bg-white border border-black rounded-lg p-6 shadow-xl h-full">
-                  <ProductForm
-                    productOptions={productOptions}
-                    selectedVariant={selectedVariant}
-                    tags={product.tags}
-                  />
+                <div className="grid grid-cols-1 gap-0">
+                  <div className="p-8">
+                    <div className="w-1/3 mx-auto mb-6">
+                      <ProductImage image={selectedVariant?.image} />
+                    </div>
+                    <div
+                      className="prose prose-sm mt-4 text-sm leading-relaxed text-center mb-6"
+                      dangerouslySetInnerHTML={{__html: descriptionHtml}}
+                    />
+                    <ProductForm
+                      productOptions={productOptions}
+                      selectedVariant={selectedVariant}
+                      tags={product.tags}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -131,13 +144,12 @@ export default function Product() {
         )}
         {!availableForPurchase && (
           <>
-            <div className="w-full">
-              <ProductImage image={selectedVariant?.image} />
-            </div>
             <div className="flex flex-col justify-start gap-6">
               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
                 {title}
               </h1>
+              <ProductImage image={selectedVariant?.image} />
+
               <div
                 className="prose max-w-none text-lg leading-relaxed"
                 dangerouslySetInnerHTML={{__html: descriptionHtml}}
@@ -310,4 +322,24 @@ const PRODUCT_QUERY = `#graphql
     }
   }
   ${PRODUCT_FRAGMENT}
+` as const;
+
+const HOURS_QUERY = `#graphql
+  query CalendarHours {
+    metaobjects(type: "park_hours", first: 1) {
+      edges {
+        node {
+          hours: field(key: "hours") {
+            value
+          }
+          water: field(key: "water") {
+            value
+          }
+          notes: field(key: "notes") {
+            value
+          }
+        }
+      }
+    }
+  }
 ` as const;
