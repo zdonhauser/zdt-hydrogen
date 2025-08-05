@@ -19,13 +19,16 @@ jobs:
           node-version: "lts/*"
           check-latest: true
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Cache yarn modules
         id: cache-yarn
         uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
-          path: ~/.yarn
+          path: .yarn/cache
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
@@ -33,7 +36,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Build and Publish to Oxygen
         run: npx shopify hydrogen deploy
