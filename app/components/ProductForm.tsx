@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router';
-import {type MappedProductOptions} from '@shopify/hydrogen';
+import { Link, useNavigate, useFetcher } from 'react-router';
+import {type MappedProductOptions, CartForm} from '@shopify/hydrogen';
 import type {
   Maybe,
   ProductOptionValueSwatch,
@@ -21,6 +21,7 @@ export function ProductForm({
 }) {
   const navigate = useNavigate();
   const {open} = useAside();
+  const fetcher = useFetcher();
 
   const isChooseYourDate = tags?.includes?.('chooseyourdate');
   const requireMemberNameAndDOB = tags?.includes?.('requireMemberNameAndDOB');
@@ -132,6 +133,23 @@ export function ProductForm({
   const [selectedSellingPlanId, setSelectedSellingPlanId] = useState<
     string | null
   >(null);
+  const [showEatAndPlayModal, setShowEatAndPlayModal] = useState(false);
+  const [addComboMeal, setAddComboMeal] = useState<boolean | null>(null);
+
+  // Auto-select first available date if none selected
+  useEffect(() => {
+    if (isChooseYourDate && calendarDates.length > 0) {
+      const hasSelection = calendarDates.some(d => d.value.selected);
+      if (!hasSelection) {
+        // Navigate to first date option
+        const firstDate = calendarDates[0];
+        navigate(firstDate.url, {
+          replace: true,
+          preventScrollReset: true,
+        });
+      }
+    }
+  }, [isChooseYourDate, calendarDates, navigate]);
 
   useEffect(() => {
     if (selectedVariant?.sellingPlanAllocations?.nodes?.length) {
@@ -173,23 +191,60 @@ useEffect(() => {
         if (option.optionValues.length === 1) return null;
 
         return (
-          <>
+          <div key={option.name}>
             {isChooseYourDate ? (
-              <div className="my-4 flex-row">
-                <h3 className="">Choose Your Date:</h3>
-                <div
-                  className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4 h-[50vh] ${calendarScrollable ? 'overflow-y-scroll' : 'overflow-hidden'} scrollbar scrollbar-track-transparent scrollbar-thumb-black/50 hover:scrollbar-thumb-black/80`}
-                >
-                  {' '}
-                  {calendarDates.map(({date, price, url, value}) => (
+              <div className="my-6">
+                <h3 className="text-2xl font-black uppercase tracking-wide text-center mb-4 text-[var(--color-brand-dark)]">Choose Your Date:</h3>
+                <div className="relative py-2 overflow-visible">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById('date-carousel');
+                      if (container) {
+                        container.scrollBy({ left: -300, behavior: 'smooth' });
+                      }
+                    }}
+                    className="absolute -left-14 top-1/2 -translate-y-1/2 z-20 bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-brand-dark)] p-2 rounded-full border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-110 transition-all"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById('date-carousel');
+                      if (container) {
+                        container.scrollBy({ left: 300, behavior: 'smooth' });
+                      }
+                    }}
+                    className="absolute -right-14 top-1/2 -translate-y-1/2 z-20 bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-brand-dark)] p-2 rounded-full border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-110 transition-all"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  <div id="date-carousel" className="flex gap-4 overflow-x-auto overflow-y-visible py-4 px-4 snap-x snap-mandatory scrollbar-none">
+                  {calendarDates.map(({date, price, url, value}, index) => {
+                    const lowestPrice = Math.min(...calendarDates.map(d => parseFloat(d.price)));
+                    const isLowestPrice = parseFloat(price) === lowestPrice;
+                    const isBelowAverage = parseFloat(price) < (calendarDates.reduce((sum, d) => sum + parseFloat(d.price), 0) / calendarDates.length);
+                    
+                    return (
                     <button
                       key={date.toISOString()}
                       type="button"
-                      className={`p-4 border border-black rounded bg-white text-center shadow hover:bg-yellow-100 cursor-pointer`}
+                      className={`relative flex-shrink-0 w-32 sm:w-36 p-4 border-4 border-[var(--color-brand-dark)] rounded-xl text-center shadow-lg hover:shadow-xl cursor-pointer transition-all duration-300 transform hover:scale-105 snap-center ${
+                        value.selected ? 'scale-105 shadow-[0_0_20px_rgba(255,242,0,0.4)]' : 'hover:bg-[var(--color-brand-cream)]'
+                      }`}
                       style={{
                         backgroundColor: value.selected
                           ? 'var(--color-brand-yellow)'
-                          : 'var(--color-brand-cream)',
+                          : isLowestPrice 
+                            ? 'var(--color-brand-green)'
+                            : isBelowAverage
+                              ? 'var(--color-brand-blue)'
+                              : 'white',
                       }}
                       onClick={() => {
                         navigate(url, {
@@ -198,34 +253,65 @@ useEffect(() => {
                         });
                       }}
                     >
+                      {isLowestPrice && (
+                        <div className="absolute -top-2 -right-2 bg-[var(--color-brand-red)] text-white font-black text-xs px-2 py-1 rounded-full border-2 border-[var(--color-brand-dark)] shadow-md z-10 animate-pulse">
+                          BEST DEAL
+                        </div>
+                      )}
+                      {!isLowestPrice && isBelowAverage && (
+                        <div className="absolute -top-2 -right-2 bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] font-black text-xs px-2 py-1 rounded-full border-2 border-[var(--color-brand-dark)] shadow-md z-10">
+                          SAVE
+                        </div>
+                      )}
                       {value.variant.sku === 'ANYDAY' && (
                         <>
-                          <span className="font-bold whitespace-nowrap">
+                          <span className="font-black text-lg whitespace-nowrap">
                             Any Day
                           </span>
-                          <div className="font-bold">Ticket</div>
-                          <div className="text-lg">
+                          <div className="font-black text-base">Ticket</div>
+                          <div className="text-2xl font-black text-white drop-shadow-lg">
                             ${parseFloat(price).toFixed(2)}
                           </div>
                         </>
                       )}
                       {!(value.variant.sku === 'ANYDAY') && (
                         <>
-                          <div>{format(date, 'EEE')}</div>
-                          <div className="font-bold">{format(date, 'M/d')}</div>
-                          <div className="text-lg">
+                          <div className="font-black text-sm uppercase">{format(date, 'EEE')}</div>
+                          <div className="font-black text-xl">{format(date, 'MMM d')}</div>
+                          <div className={`text-2xl font-black drop-shadow-lg ${isLowestPrice || isBelowAverage ? 'text-white' : 'text-[var(--color-brand-dark)]'}`}>
                             ${parseFloat(price).toFixed(2)}
                           </div>
                         </>
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
+                  </div>
+                </div>
+                {/* Price Legend */}
+                <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-[var(--color-brand-green)] border-2 border-[var(--color-brand-dark)] rounded"></div>
+                    <span className="font-bold">Best Deal</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-[var(--color-brand-blue)] border-2 border-[var(--color-brand-dark)] rounded"></div>
+                    <span className="font-bold">Below Average</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-white border-2 border-[var(--color-brand-dark)] rounded"></div>
+                    <span className="font-bold">Regular Price</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-[var(--color-brand-yellow)] border-2 border-[var(--color-brand-dark)] rounded"></div>
+                    <span className="font-bold">Selected</span>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="product-options" key={option.name}>
-                <h5>{option.name}</h5>
-                <div className="product-options-grid">
+              <div className="product-options mb-6" key={option.name}>
+                <h5 className="text-2xl font-black uppercase tracking-wide text-center mb-4 text-[var(--color-brand-dark)]">{option.name}</h5>
+                <div className="product-options-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {option.optionValues.map((value) => {
                     const {
                       name,
@@ -251,15 +337,16 @@ useEffect(() => {
                           replace
                           to={`/products/${handle}?${variantUriQuery}`}
                           className={`
-                            product-options-item
-                            px-4 py-2 rounded-full text-sm font-semibold
-                            transition-all duration-300 ease-out transform
+                            product-options-item block
+                            px-6 py-4 rounded-xl text-base font-black border-4 border-[var(--color-brand-dark)]
+                            transition-all duration-300 ease-out transform hover:scale-110
+                            shadow-lg hover:shadow-xl
                             ${
                               selected
-                                ? 'bg-yellow-400 text-black shadow-lg scale-105'
-                                : 'bg-white text-black border border-gray-300 hover:bg-yellow-100 hover:scale-105'
+                                ? 'bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] shadow-[0_0_20px_rgba(255,242,0,0.4)] scale-105'
+                                : 'bg-white text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-cream)] hover:shadow-[0_0_15px_rgba(0,0,0,0.2)]'
                             }
-                            ${!available ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                            ${!available ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'}
                           `}
                         >
                           <ProductOptionSwatch swatch={swatch} name={name} />
@@ -277,14 +364,15 @@ useEffect(() => {
                           key={option.name + name}
                           className={`
                             product-options-item
-                            px-4 py-2 m-2 w-full rounded-full text-sm font-semibold
-                            transition-all duration-300 ease-out transform
+                            px-6 py-4 m-2 w-full rounded-xl text-base font-black border-4 border-[var(--color-brand-dark)]
+                            transition-all duration-300 ease-out transform hover:scale-110
+                            shadow-lg hover:shadow-xl
                             ${
                               selected
-                                ? 'bg-[var(--color-brand-yellow)] text-black shadow-lg'
-                                : 'bg-[var(--color-brand-cream)] text-black border border-gray-300 hover:bg-[var(--color-brand-cream-hover)] hover:scale-105'
+                                ? 'bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] shadow-[0_0_20px_rgba(255,242,0,0.4)] scale-105'
+                                : 'bg-white text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-cream)] hover:shadow-[0_0_15px_rgba(0,0,0,0.2)]'
                             }
-                            ${!available ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                            ${!available ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'}
                           `}
                           disabled={!exists}
                           hidden={!exists}
@@ -306,43 +394,39 @@ useEffect(() => {
                 <br />
               </div>
             )}
-          </>
+          </div>
         );
       })}
       {selectedVariant?.sellingPlanAllocations?.nodes?.length ? (
-        <div className="my-4">
-          <h5 className="text-left font-bold mb-2">Choose a Plan:</h5>
+        <div className="my-6">
+          <h5 className="text-2xl font-black uppercase tracking-wide text-center mb-4 text-[var(--color-brand-dark)]">Choose a Plan:</h5>
           <div className="flex flex-col gap-4">
             {selectedVariant.sellingPlanAllocations.nodes.map((allocation) => {
               const {sellingPlan, priceAdjustments} = allocation;
               const price = priceAdjustments?.[0]?.price?.amount;
               const compareAtPrice =
                 priceAdjustments?.[0]?.compareAtPrice?.amount;
-              const discount =
-                compareAtPrice && price
-                  ? (1 - Number(price) / Number(compareAtPrice)) * 100
-                  : null;
 
               return (
                 <button
                   key={sellingPlan.id}
                   type="button"
-                  className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-300 ease-out transform ${
+                  className={`w-full text-left px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] transition-all duration-300 ease-out transform hover:scale-105 shadow-lg hover:shadow-xl ${
                     selectedSellingPlanId === sellingPlan.id
-                      ? 'bg-[var(--color-brand-yellow)] text-black shadow-lg scale-105'
-                      : 'bg-[var(--color-brand-cream)] text-black border-gray-300 hover:bg-[var(--color-brand-cream-hover)] hover:scale-105'
+                      ? 'bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] shadow-[0_0_20px_rgba(255,242,0,0.4)] scale-105'
+                      : 'bg-white text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-cream)] hover:shadow-[0_0_15px_rgba(0,0,0,0.2)]'
                   }`}
                   onClick={() => setSelectedSellingPlanId(sellingPlan.id)}
                 >
-                  <div className="font-bold">{sellingPlan.name}</div>
+                  <div className="font-black text-lg">{sellingPlan.name}</div>
                   {sellingPlan.description && (
                     <div className="text-sm text-gray-700">
                       {sellingPlan.description}
                     </div>
                   )}
                   {price && (
-                    <div className="text-sm mt-1">
-                      <span className="font-semibold">
+                    <div className="text-base mt-2">
+                      <span className="font-black text-xl">
                         ${Number(price).toFixed(2)}
                       </span>
                     </div>
@@ -357,7 +441,7 @@ useEffect(() => {
         <>
         <div className="mt-6 flex flex-col items-left  justify-center">
           {Array.from({length: quantity}).map((_, index) => (
-            <div key={index} className="space-y-4">
+            <div key={`member-${index}`} className="space-y-4">
               <h3 className="text-xl font-bold">Member {index + 1} Details</h3>
               <div className="flex items-center border border-black rounded bg-white ">
                 <input
@@ -384,7 +468,7 @@ useEffect(() => {
                 >
                   <option value="">Month</option>
                   {Array.from({length: 12}, (_, i) => (
-                    <option key={i} value={String(i + 1).padStart(2, '0')}>
+                    <option key={`month-${i}`} value={String(i + 1).padStart(2, '0')}>
                       {new Date(0, i).toLocaleString('default', {
                         month: 'short',
                       })}
@@ -403,7 +487,7 @@ useEffect(() => {
                 >
                   <option value="">Day</option>
                   {Array.from({length: 31}, (_, i) => (
-                    <option key={i} value={String(i + 1).padStart(2, '0')}>
+                    <option key={`day-${i}`} value={String(i + 1).padStart(2, '0')}>
                       {i + 1}
                     </option>
                   ))}
@@ -422,7 +506,7 @@ useEffect(() => {
                   {Array.from({length: 120}, (_, i) => {
                     const year = new Date().getFullYear() - i;
                     return (
-                      <option key={year} value={year}>
+                      <option key={`year-${year}`} value={year}>
                         {year}
                       </option>
                     );
@@ -444,69 +528,192 @@ useEffect(() => {
         </>
       ):null}
 
-      <div className="mt-6 flex items-center gap-4 justify-center">
-        <div className="flex items-center border border-black rounded bg-white ">
-          <button
-            type="button"
-            className="px-3 py-2 text-xl font-bold text-black hover:bg-yellow-200"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-          >
-            -
-          </button>
-          <span className="px-4 text-lg font-semibold">{quantity}</span>
-          <button
-            type="button"
-            className="px-3 py-2 text-xl font-bold text-black hover:bg-yellow-200"
-            onClick={() => setQuantity((q) => q + 1)}
-          >
-            +
-          </button>
-        </div>
+      <div className="mt-8 flex flex-col items-center gap-4 justify-center">
+        <h5 className="text-xl font-black uppercase tracking-wide text-center text-[var(--color-brand-dark)]">Number of Wristbands:</h5>
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex items-center border-4 border-[var(--color-brand-dark)] rounded-xl bg-white shadow-lg">
+            <button
+              type="button"
+              className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-l-lg"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            >
+              −
+            </button>
+            <span className="px-6 py-3 text-xl font-black min-w-[3rem] text-center">{quantity}</span>
+            <button
+              type="button"
+              className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-r-lg"
+              onClick={() => setQuantity((q) => q + 1)}
+            >
+              +
+            </button>
+          </div>
 
-        <AddToCartButton
-          disabled={
-            !selectedVariant ||
-            !selectedVariant.availableForSale ||
-            (requireMemberNameAndDOB &&
-              memberDetails.some(
-                (member) =>
-                  !member.name.trim() ||
-                  !member.month ||
-                  !member.day ||
-                  !member.year,
-              ))
-          }
-          onClick={() => open('cart')}
-          lines={
-            selectedVariant
-              ? requireMemberNameAndDOB
-                ? memberDetails.map((member) => ({
-                    merchandiseId: selectedVariant.id,
-                    quantity: 1,
-                    selectedVariant,
-                    attributes: [
-                      {key: 'Name', value: member.name},
-                      {
-                        key: 'Date of Birth',
-                        value: `${member.month}/${member.day}/${member.year}`,
-                      },
-                    ],
-                    sellingPlanId: selectedSellingPlanId || undefined,
-                  }))
-                : [
-                    {
-                      merchandiseId: selectedVariant.id,
-                      quantity,
-                      selectedVariant,
-                      sellingPlanId: selectedSellingPlanId || undefined,
-                    },
-                  ]
-              : []
-          }
-        >
-          {selectedVariant?.availableForSale ? 'Add to Cart' : 'Sold Out'}
-        </AddToCartButton>
+{isChooseYourDate ? (
+            <button
+              type="button"
+              disabled={
+                !selectedVariant ||
+                !selectedVariant.availableForSale ||
+                (requireMemberNameAndDOB &&
+                  memberDetails.some(
+                    (member) =>
+                      !member.name.trim() ||
+                      !member.month ||
+                      !member.day ||
+                      !member.year,
+                  ))
+              }
+              onClick={() => {
+                setShowEatAndPlayModal(true);
+              }}
+              className="bg-[var(--color-brand-yellow)] text-black font-bold px-6 py-3 rounded border border-black shadow hover:bg-[var(--color-brand-yellow-hover)] hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {selectedVariant?.availableForSale ? 'Add to Cart' : 'Sold Out'}
+            </button>
+          ) : (
+            <AddToCartButton
+              data-add-to-cart-button
+              disabled={
+                !selectedVariant ||
+                !selectedVariant.availableForSale ||
+                (requireMemberNameAndDOB &&
+                  memberDetails.some(
+                    (member) =>
+                      !member.name.trim() ||
+                      !member.month ||
+                      !member.day ||
+                      !member.year,
+                  ))
+              }
+              onClick={() => {
+                open('cart');
+              }}
+              lines={
+                selectedVariant
+                  ? requireMemberNameAndDOB
+                    ? memberDetails.map((member) => ({
+                        merchandiseId: selectedVariant.id,
+                        quantity: 1,
+                        selectedVariant,
+                        attributes: [
+                          {key: 'Name', value: member.name},
+                          {
+                            key: 'Date of Birth',
+                            value: `${member.month}/${member.day}/${member.year}`,
+                          },
+                        ],
+                        sellingPlanId: selectedSellingPlanId || undefined,
+                      }))
+                    : [
+                        {
+                          merchandiseId: selectedVariant.id,
+                          quantity,
+                          selectedVariant,
+                          sellingPlanId: selectedSellingPlanId || undefined,
+                        },
+                      ]
+                  : []
+              }
+            >
+              {selectedVariant?.availableForSale ? 'Add to Cart' : 'Sold Out'}
+            </AddToCartButton>
+          )}
+        </div>
       </div>
+
+      {/* Eat & Play Modal */}
+      {showEatAndPlayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowEatAndPlayModal(false)}>
+          <div 
+            className="bg-white border-4 border-[var(--color-brand-dark)] rounded-xl p-8 max-w-2xl w-full shadow-2xl relative" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowEatAndPlayModal(false)}
+              className="absolute top-4 right-4 text-3xl font-black text-[var(--color-brand-dark)] hover:text-[var(--color-brand-red)] transition-colors"
+            >
+              ×
+            </button>
+            
+            <h2 className="text-3xl font-black uppercase text-center mb-6 text-[var(--color-brand-dark)]">
+              Make it an Eat & Play Combo?
+            </h2>
+            
+            <div className="text-center mb-6">
+              <p className="text-xl font-bold mb-2">
+                Add a combo meal for just <span className="text-[var(--color-brand-green)] text-2xl">$9.99</span> each!
+              </p>
+              <p className="text-sm text-gray-600">
+                (Value of up to $13.99 compared to current in-park food pricing)
+              </p>
+            </div>
+            
+            <div className="bg-[var(--color-brand-cream)] border-2 border-[var(--color-brand-dark)] rounded-lg p-4 mb-6">
+              <p className="text-sm font-semibold mb-2">Your combo meal includes one of the following:</p>
+              <ul className="grid grid-cols-2 gap-2 text-sm">
+                <li>• Cheeseburger Combo</li>
+                <li>• Chicken Tender Combo</li>
+                <li>• Chicken Sandwich Combo</li>
+                <li>• Pizza Combo</li>
+                <li>• Grilled Cheese Combo</li>
+                <li>• Hot Dog Combo</li>
+                <li>• Footlong Corndog Combo</li>
+                <li>• Southwest Veggie Burger Combo</li>
+              </ul>
+              <p className="text-xs mt-2 font-semibold">
+                All combos include fries or chips, and a medium drink or water bottle.
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              {/* Yes - Add Combo Meal */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedVariant) {
+                    fetcher.submit(
+                      { 
+                        wristbandVariantId: selectedVariant.id,
+                        quantity: quantity.toString()
+                      },
+                      { method: 'POST', action: '/combo-meal/add' }
+                    );
+                    setShowEatAndPlayModal(false);
+                    setTimeout(() => open('cart'), 500);
+                  }
+                }}
+                disabled={fetcher.state !== 'idle'}
+                className="flex-1 bg-[var(--color-brand-green)] hover:bg-[var(--color-brand-green-hover)] text-white font-black text-lg px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"
+              >
+                Yes, Add Combo Meal!
+              </button>
+              
+              {/* No - Wristband Only */}
+              <CartForm 
+                route="/cart" 
+                inputs={{ lines: selectedVariant ? [{ merchandiseId: selectedVariant.id, quantity }] : [] }} 
+                action={CartForm.ACTIONS.LinesAdd}
+              >
+                {(cartFetcher: any) => (
+                  <button
+                    type="submit"
+                    onClick={() => {
+                      setShowEatAndPlayModal(false);
+                      setTimeout(() => open('cart'), 500);
+                    }}
+                    disabled={cartFetcher.state !== 'idle'}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-[var(--color-brand-dark)] font-black text-lg px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                  >
+                    No Thanks
+                  </button>
+                )}
+              </CartForm>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

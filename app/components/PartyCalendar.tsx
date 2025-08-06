@@ -1,7 +1,7 @@
 import {useState, useMemo} from 'react';
 import { Link } from 'react-router';
 
-export default function PartyCalendar({products}: {products: any[]}) {
+export default function PartyCalendar({products, selectedRoom}: {products: any[], selectedRoom: string | null}) {
   const today = useMemo(() => new Date(), []);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -99,6 +99,26 @@ export default function PartyCalendar({products}: {products: any[]}) {
             </button>
           </div>
 
+          {selectedRoom && (
+            <div className="mb-4 p-4 bg-white rounded-lg border-2 border-[var(--color-brand-dark)] shadow-lg">
+              <h3 className="font-bold text-center mb-2">Calendar Color Guide:</h3>
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-[var(--color-brand-yellow)] border border-[var(--color-brand-dark)] rounded"></div>
+                  <span>{selectedRoom} Available</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-[var(--color-brand-blue)] border border-[var(--color-brand-dark)] rounded"></div>
+                  <span>Other Options Available</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-400 border border-gray-600 rounded"></div>
+                  <span>No Availability</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-7 gap-2 border-4 border-[var(--color-dark)] bg-[var(--color-brand-cream)] p-4 rounded-lg w-full">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
               <div key={day} className="text-center font-bold">
@@ -109,9 +129,26 @@ export default function PartyCalendar({products}: {products: any[]}) {
               if (!date) return <div key={idx} />;
               const dateKey = formatDateKey(date);
               const exists = availableDates[dateKey]?.length > 0;
-              const isAvailable = availableDates[dateKey]?.some(
-                (slot: any) => slot.availableForSale,
-              );
+              
+              // Check availability based on selected room
+              let isAvailable = false;
+              let hasOtherRooms = false;
+              
+              if (selectedRoom && availableDates[dateKey]) {
+                // Check if selected room is available
+                isAvailable = availableDates[dateKey].some(
+                  (slot: any) => slot.availableForSale && slot.roomName.toLowerCase().includes(selectedRoom.toLowerCase())
+                );
+                // Check if other rooms are available
+                hasOtherRooms = availableDates[dateKey].some(
+                  (slot: any) => slot.availableForSale && !slot.roomName.toLowerCase().includes(selectedRoom.toLowerCase())
+                );
+              } else {
+                // No specific room selected, show any availability
+                isAvailable = availableDates[dateKey]?.some(
+                  (slot: any) => slot.availableForSale,
+                );
+              }
               return (
                 <button
                   key={idx}
@@ -128,16 +165,29 @@ export default function PartyCalendar({products}: {products: any[]}) {
                   className={`h-10 sm:h-20 flex flex-col items-center justify-center border-2 rounded-lg ${
                     exists
                       ? selectedDate === dateKey
-                        ? 'bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
-                        : 'bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold'
-                      : 'bg-[var(--color-light)] text-gray-400'
-                  }
-                    ${exists && !isAvailable ? 'bg-gray-400 hover:bg-gray-600 text-black' : ''}
-                  `}
+                        ? isAvailable 
+                          ? 'bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
+                          : hasOtherRooms
+                            ? 'bg-[var(--color-brand-blue)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
+                            : 'bg-gray-400 text-black font-bold border-[var(--color-brand-dark)] scale-120'
+                        : isAvailable
+                          ? 'bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
+                          : hasOtherRooms
+                            ? 'bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
+                            : 'bg-gray-400 hover:bg-gray-600 text-black border-gray-600'
+                      : 'bg-[var(--color-light)] text-gray-400 border-gray-300'
+                  }`}
                 >
                   {date.getDate()}
-                  {isAvailable && (
-                    <span className="text-xs mt-1 hidden md:block">Available</span>
+                  {exists && (
+                    <span className="text-xs mt-1 hidden md:block">
+                      {isAvailable 
+                        ? selectedRoom ? `${selectedRoom} Available` : 'Available'
+                        : hasOtherRooms
+                          ? 'Other Options'
+                          : 'Full'
+                      }
+                    </span>
                   )}
                 </button>
               );
@@ -148,13 +198,26 @@ export default function PartyCalendar({products}: {products: any[]}) {
         {selectedDate && (
           <div data-room-times>
             <h2 className="text-3xl font-extrabold mb-8 text-center">
-              Available Party Rooms for{' '}
+              {selectedRoom 
+                ? selectedRoom.includes('Point') 
+                  ? `${selectedRoom} Party Station`
+                  : `${selectedRoom} Party Room`
+                : 'Available Party Options'} for{' '}
               {availableDates[selectedDate]?.[0]?.date.toLocaleDateString(
                 'en-US',
                 {year: '2-digit', month: '2-digit', day: '2-digit'},
               )}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            
+            {selectedRoom && (
+              <p className="text-lg font-bold text-center mb-6 bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] p-3 rounded-lg mx-auto max-w-2xl border-2 border-[var(--color-brand-dark)] shadow-lg">
+                Showing your selected {selectedRoom.includes('Point') ? 'party station' : 'party room'}: <strong>{selectedRoom}</strong>
+                <br />
+                <small>Other available options are shown below</small>
+              </p>
+            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               {Object.entries(
                 availableDates[selectedDate]?.reduce(
                   (acc: {[room: string]: any[]}, slot) => {
@@ -168,7 +231,16 @@ export default function PartyCalendar({products}: {products: any[]}) {
                   {},
                 ) || {},
               )
-                .sort(([a], [b]) => a.localeCompare(b))
+                // Sort by selected room first, then alphabetically
+                .sort(([a], [b]) => {
+                  if (selectedRoom) {
+                    const aIsSelected = a.toLowerCase().includes(selectedRoom.toLowerCase());
+                    const bIsSelected = b.toLowerCase().includes(selectedRoom.toLowerCase());
+                    if (aIsSelected && !bIsSelected) return -1;
+                    if (!aIsSelected && bIsSelected) return 1;
+                  }
+                  return a.localeCompare(b);
+                })
                 .map(([room, slots]) => {
                   let imageUrl = '';
                   if (room.includes('Carousel')) {
@@ -185,18 +257,29 @@ export default function PartyCalendar({products}: {products: any[]}) {
                       'https://cdn.shopify.com/s/files/1/0038/2527/0897/files/Large.jpg';
                   }
 
+                  const isSelectedRoom = selectedRoom && room.toLowerCase().includes(selectedRoom.toLowerCase());
+
                   return (
                     <div
                       key={room}
-                      className="flex flex-col bg-[var(--color-light)] border-4 border-[var(--color-dark)] rounded-xl shadow-lg overflow-hidden"
+                      className={`flex flex-col bg-[var(--color-light)] rounded-xl shadow-lg overflow-hidden border-4 border-[var(--color-brand-dark)] ${
+                        isSelectedRoom 
+                          ? 'shadow-[0_0_20px_4px_rgba(255,193,7,0.6)] ring-4 ring-[var(--color-brand-yellow)]/30 scale-105' 
+                          : ''
+                      }`}
                     >
                       <img
                         src={imageUrl}
                         alt={room}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-32 sm:h-40 md:h-48 object-cover"
                       />
-                      <div className="flex flex-col p-4 items-center gap-3">
-                        <h3 className="text-xl font-bold text-center">
+                      {isSelectedRoom && (
+                        <div className="absolute top-2 right-2 bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] font-black text-xs px-2 py-1 rounded-full border-2 border-[var(--color-brand-dark)] shadow-lg z-10">
+                          YOUR CHOICE
+                        </div>
+                      )}
+                      <div className="flex flex-col p-4 items-center gap-3 relative">
+                        <h3 className="text-xl font-bold text-center text-[var(--color-brand-dark)]">
                           {room}
                         </h3>
                         <p className="room-minimum">

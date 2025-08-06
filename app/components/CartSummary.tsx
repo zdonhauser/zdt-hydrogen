@@ -56,6 +56,12 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
           <dd>${estimatedTax.toFixed(2)}</dd>
         </dl>
       )}
+      {estimatedTax === 0 && (
+        <dl className="flex justify-between pt-2 text-sm text-gray-600 italic">
+          <dt>Sales Tax</dt>
+          <dd>Calculated at checkout</dd>
+        </dl>
+      )}
       {!isNaN(Number(cart.cost?.totalAmount?.amount)) &&
         !isNaN(estimatedTax) && (
           <dl className="flex justify-between pt-2 text-lg font-semibold">

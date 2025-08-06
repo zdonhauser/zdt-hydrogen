@@ -31,7 +31,10 @@ export type CartLineFragment = Pick<
     image?: StorefrontAPI.Maybe<
       Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
     >;
-    product: Pick<StorefrontAPI.Product, 'handle' | 'title' | 'id' | 'vendor'>;
+    product: Pick<
+      StorefrontAPI.Product,
+      'handle' | 'title' | 'id' | 'vendor' | 'tags'
+    >;
     selectedOptions: Array<
       Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
     >;
@@ -61,7 +64,10 @@ export type CartLineComponentFragment = Pick<
     image?: StorefrontAPI.Maybe<
       Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
     >;
-    product: Pick<StorefrontAPI.Product, 'handle' | 'title' | 'id' | 'vendor'>;
+    product: Pick<
+      StorefrontAPI.Product,
+      'handle' | 'title' | 'id' | 'vendor' | 'tags'
+    >;
     selectedOptions: Array<
       Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
     >;
@@ -118,7 +124,7 @@ export type CartApiQueryFragment = Pick<
             >;
             product: Pick<
               StorefrontAPI.Product,
-              'handle' | 'title' | 'id' | 'vendor'
+              'handle' | 'title' | 'id' | 'vendor' | 'tags'
             >;
             selectedOptions: Array<
               Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
@@ -153,7 +159,7 @@ export type CartApiQueryFragment = Pick<
             >;
             product: Pick<
               StorefrontAPI.Product,
-              'handle' | 'title' | 'id' | 'vendor'
+              'handle' | 'title' | 'id' | 'vendor' | 'tags'
             >;
             selectedOptions: Array<
               Pick<StorefrontAPI.SelectedOption, 'name' | 'value'>
@@ -176,6 +182,19 @@ export type CartApiQueryFragment = Pick<
   discountCodes: Array<
     Pick<StorefrontAPI.CartDiscountCode, 'code' | 'applicable'>
   >;
+  delivery: {
+    addresses: Array<
+      Pick<
+        StorefrontAPI.CartSelectableAddress,
+        'id' | 'selected' | 'oneTimeUse'
+      > & {
+        address: Pick<
+          StorefrontAPI.CartDeliveryAddress,
+          'address1' | 'city' | 'provinceCode' | 'countryCode' | 'zip'
+        >;
+      }
+    >;
+  };
 };
 
 export type MenuItemFragment = Pick<
@@ -338,6 +357,35 @@ export type AdmissionProductsQuery = {
             StorefrontAPI.Product,
             'id' | 'title' | 'handle' | 'descriptionHtml'
           >
+        >;
+      };
+    }>;
+  };
+};
+
+export type CouponsDealsQueryVariables = StorefrontAPI.Exact<{
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+}>;
+
+export type CouponsDealsQuery = {
+  collections: {
+    nodes: Array<{
+      products: {
+        nodes: Array<
+          Pick<
+            StorefrontAPI.Product,
+            'id' | 'title' | 'handle' | 'descriptionHtml'
+          > & {
+            images: {
+              nodes: Array<
+                Pick<
+                  StorefrontAPI.Image,
+                  'id' | 'url' | 'altText' | 'width' | 'height'
+                >
+              >;
+            };
+          }
         >;
       };
     }>;
@@ -1649,9 +1697,13 @@ interface GeneratedQueryTypes {
     return: AttractionProductsQuery;
     variables: AttractionProductsQueryVariables;
   };
-  '#graphql\n  query AdmissionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Admission") {\n      nodes {\n        products(first: 10) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n          }\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  query AdmissionProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Tickets") {\n      nodes {\n        products(first: 10) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n          }\n        }\n      }\n    }\n  }\n': {
     return: AdmissionProductsQuery;
     variables: AdmissionProductsQueryVariables;
+  };
+  '#graphql\n  query CouponsDeals($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, reverse: false, query: "Coupons") {\n      nodes {\n        products(first: 10) {\n          nodes {\n            id\n            title\n            handle\n            descriptionHtml\n            images(first: 1) {\n              nodes {\n                id\n                url\n                altText\n                width\n                height\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+    return: CouponsDealsQuery;
+    variables: CouponsDealsQueryVariables;
   };
   '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n  }\n': {
     return: FeaturedCollectionQuery;

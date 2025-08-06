@@ -1,5 +1,5 @@
 import {redirect, type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import { useLoaderData, Link, type MetaFunction } from 'react-router';
+import { useLoaderData, Link, type MetaFunction, useSearchParams } from 'react-router';
 import {
   getPaginationVariables,
   Image,
@@ -75,6 +75,10 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
   const collectionTitle = collection.title;
+  
+  // Get URL search params to check for selected room
+  const [searchParams] = useSearchParams();
+  const selectedRoom = searchParams.get('room');
 
   return (
     <div className="relative flex flex-col items-center px-4 py-10 bg-[var(--color-brand-green)] text-[var(--color-dark)] overflow-hidden min-h-screen">
@@ -84,7 +88,7 @@ export default function Collection() {
         opacity="opacity-10"
       />
       {collection.title === 'Party Rooms' && (
-        <PartyCalendar products={collection.products.nodes} />
+        <PartyCalendar products={collection.products.nodes} selectedRoom={selectedRoom} />
       )}
       {!(collection.title === 'Party Rooms') && (
         <div className="relative z-10 w-full max-w-7xl flex flex-col items-center">

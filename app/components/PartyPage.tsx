@@ -27,7 +27,7 @@ export default function PartyPage() {
           {partyRooms.map((room) => (
             <Link
               key={room.name}
-              to={`/collections/party-booking`}
+              to={`/collections/party-booking?room=${encodeURIComponent(room.name.replace(' Party Room', '').replace(' Party Station', ''))}`}
               className="relative flex flex-col items-center border-2 border-[var(--color-dark)] rounded-3xl p-6 shadow-xl bg-[var(--color-brand-cream)] hover:scale-105 hover:rotate-1 hover:shadow-2xl transition-all duration-300 ease-out"
             >
               <span className="absolute top-3 left-3 bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold text-xs px-3 py-1 rounded-full shadow-md">
@@ -46,11 +46,9 @@ export default function PartyPage() {
                 <br />
                 <small>Minimum: {room.minimum}</small>
               </h4>
-              <Link to="/collections/party-booking">
-                <button className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold px-4 py-2 rounded-full border-2 border-[var(--color-dark)] mb-4">
-                  Book Now
-                </button>
-              </Link>
+              <div className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold px-4 py-2 rounded-full border-2 border-[var(--color-dark)] mb-4 pointer-events-none">
+                Book Now
+              </div>
               <div className="text-sm text-center space-y-5">
                 {room.features.map((feature, idx) => (
                   <>

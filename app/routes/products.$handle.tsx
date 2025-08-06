@@ -104,7 +104,7 @@ export default function Product() {
               {isPartyProduct && (
                 <div className="grid grid-cols-1 gap-0">
                   <div className="p-8">
-                    <div className="w-1/3 mx-auto mb-6">
+                    <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-w-md mx-auto mb-6">
                       <ProductImage image={selectedVariant?.image} />
                     </div>
                     <div
@@ -124,7 +124,7 @@ export default function Product() {
               {!isPartyProduct && (
                 <div className="grid grid-cols-1 gap-0">
                   <div className="p-8">
-                    <div className="w-1/3 mx-auto mb-6">
+                    <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-w-md mx-auto mb-6">
                       <ProductImage image={selectedVariant?.image} />
                     </div>
                     <div
