@@ -108,7 +108,7 @@ export default function Product() {
                       <ProductImage image={selectedVariant?.image} />
                     </div>
                     <div
-                      className="prose prose-sm mt-4 text-sm leading-relaxed text-center mb-6"
+                      className="mt-4 mb-6 text-center max-w-4xl mx-auto product-description"
                       dangerouslySetInnerHTML={{__html: descriptionHtml}}
                     />
                     <PartyForm
@@ -128,7 +128,7 @@ export default function Product() {
                       <ProductImage image={selectedVariant?.image} />
                     </div>
                     <div
-                      className="prose prose-sm mt-4 text-sm leading-relaxed text-center mb-6"
+                      className="mt-4 mb-6 text-center max-w-4xl mx-auto product-description"
                       dangerouslySetInnerHTML={{__html: descriptionHtml}}
                     />
                     <ProductForm
@@ -151,7 +151,7 @@ export default function Product() {
               <ProductImage image={selectedVariant?.image} />
 
               <div
-                className="prose max-w-none text-lg leading-relaxed"
+                className="max-w-4xl product-description"
                 dangerouslySetInnerHTML={{__html: descriptionHtml}}
               />
             </div>
@@ -212,6 +212,7 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
       amount
       currencyCode
     }
+    quantityAvailable
     sellingPlanAllocations(first: 10) {
       nodes {
         priceAdjustments {

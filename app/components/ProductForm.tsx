@@ -25,6 +25,10 @@ export function ProductForm({
 
   const isChooseYourDate = tags?.includes?.('chooseyourdate');
   const requireMemberNameAndDOB = tags?.includes?.('requireMemberNameAndDOB');
+  const notAvailable = tags?.includes?.('notavailable');
+  const notOnline = tags?.includes?.('notonline');
+  const is4Packs = tags?.includes?.('4-Packs');
+  const addFood = tags?.includes?.('addfood');
 
   const formRef = useRef<HTMLDivElement>(null);
   const [calendarScrollable, setCalendarScrollable] = useState(false);
@@ -129,6 +133,10 @@ export function ProductForm({
     );
   }, [productOptions, isChooseYourDate]);
 
+  // Get available inventory for the selected variant
+  const maxQuantity = selectedVariant?.quantityAvailable || 999;
+  const showInventoryWarning = maxQuantity < 10 && maxQuantity > 0;
+  
   const [quantity, setQuantity] = useState(1);
   const [selectedSellingPlanId, setSelectedSellingPlanId] = useState<
     string | null
@@ -159,6 +167,9 @@ export function ProductForm({
     } else {
       setSelectedSellingPlanId(null);
     }
+    
+    // Reset quantity to 1 when variant changes and ensure it doesn't exceed max
+    setQuantity(1);
   }, [selectedVariant]);
 
   // Member details state for name and DOB (month, day, year)
@@ -186,6 +197,18 @@ useEffect(() => {
 
   return (
     <div ref={formRef} className="product-form m-4">
+      {/* Not Available Banner */}
+      {notAvailable && (
+        <div className="mb-6 bg-[var(--color-brand-red)] border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center shadow-lg">
+          <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+            ⚠️ Not Currently Available
+          </h3>
+          <p className="text-lg font-bold text-white">
+            This item is not currently available for purchase.
+          </p>
+        </div>
+      )}
+      
       {productOptions.map((option) => {
         // If there is only a single value in the option values, don't display the option
         if (option.optionValues.length === 1) return null;
@@ -528,28 +551,50 @@ useEffect(() => {
         </>
       ):null}
 
-      <div className="mt-8 flex flex-col items-center gap-4 justify-center">
-        <h5 className="text-xl font-black uppercase tracking-wide text-center text-[var(--color-brand-dark)]">Number of Wristbands:</h5>
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="flex items-center border-4 border-[var(--color-brand-dark)] rounded-xl bg-white shadow-lg">
-            <button
-              type="button"
-              className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-l-lg"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            >
-              −
-            </button>
-            <span className="px-6 py-3 text-xl font-black min-w-[3rem] text-center">{quantity}</span>
-            <button
-              type="button"
-              className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-r-lg"
-              onClick={() => setQuantity((q) => q + 1)}
-            >
-              +
-            </button>
-          </div>
+{!(notAvailable || notOnline) && (
+        <div className="mt-8 flex flex-col items-center gap-4 justify-center">
+          <h5 className="text-xl font-black uppercase tracking-wide text-center text-[var(--color-brand-dark)]">
+            {is4Packs ? 'Number of Fun Packs:' : isChooseYourDate ? 'Number of Wristbands:' : 'Quantity:'}
+          </h5>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center border-4 border-[var(--color-brand-dark)] rounded-xl bg-white shadow-lg">
+                <button
+                  type="button"
+                  className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-l-lg"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                >
+                  −
+                </button>
+                <span className="px-6 py-3 text-xl font-black min-w-[3rem] text-center">{quantity}</span>
+                <button
+                  type="button"
+                  className="px-4 py-3 text-2xl font-black text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-yellow)] transition-all duration-200 rounded-r-lg"
+                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                  disabled={quantity >= maxQuantity}
+                >
+                  +
+                </button>
+              </div>
+              
+              {/* Inventory Display */}
+              {showInventoryWarning && (
+                <div className="text-center">
+                  <p className="text-sm font-bold text-[var(--color-brand-red)]">
+                    Only {maxQuantity} left in stock!
+                  </p>
+                </div>
+              )}
+              {maxQuantity < 999 && maxQuantity >= 10 && (
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-gray-600">
+                    {maxQuantity} available
+                  </p>
+                </div>
+              )}
+            </div>
 
-{isChooseYourDate ? (
+{isChooseYourDate && addFood ? (
             <button
               type="button"
               disabled={
@@ -618,9 +663,26 @@ useEffect(() => {
             >
               {selectedVariant?.availableForSale ? 'Add to Cart' : 'Sold Out'}
             </AddToCartButton>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* Unavailable Items Notice */}
+      {(notAvailable || notOnline) && (
+        <div className="mt-8 flex justify-center">
+          <div className="bg-gray-100 border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center max-w-md">
+            <p className="text-lg font-black text-[var(--color-brand-dark)] mb-2">
+              {notAvailable ? 'Not Currently Available' : 'Not Available Online'}
+            </p>
+            <p className="text-sm font-semibold text-gray-600">
+              {notAvailable 
+                ? 'This item is not currently available for purchase.' 
+                : 'This item is not available for online purchase. Please visit the park or call for availability.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Eat & Play Modal */}
       {showEatAndPlayModal && (
@@ -660,7 +722,6 @@ useEffect(() => {
                 <li>• Grilled Cheese Combo</li>
                 <li>• Hot Dog Combo</li>
                 <li>• Footlong Corndog Combo</li>
-                <li>• Southwest Veggie Burger Combo</li>
               </ul>
               <p className="text-xs mt-2 font-semibold">
                 All combos include fries or chips, and a medium drink or water bottle.
@@ -699,9 +760,12 @@ useEffect(() => {
                 {(cartFetcher: any) => (
                   <button
                     type="submit"
-                    onClick={() => {
-                      setShowEatAndPlayModal(false);
-                      setTimeout(() => open('cart'), 500);
+                    onClick={(e) => {
+                      // Let the form submit first, then close modal and open cart
+                      setTimeout(() => {
+                        setShowEatAndPlayModal(false);
+                        open('cart');
+                      }, 100);
                     }}
                     disabled={cartFetcher.state !== 'idle'}
                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-[var(--color-brand-dark)] font-black text-lg px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"

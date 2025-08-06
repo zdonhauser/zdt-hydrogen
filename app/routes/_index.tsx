@@ -4,6 +4,7 @@ import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
 import Calendar from '~/components/Calendar';
+import ClosingAnnouncement from '~/components/ClosingAnnouncement';
 import { PricingInfo } from '~/components/PricingInfo';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
 import {AttractionProductsQuery} from 'storefrontapi.generated';
@@ -97,6 +98,7 @@ export default function Homepage() {
   return (
     <>
       <Hero id="hero" />
+      <ClosingAnnouncement />
       <ScrollingRibbon
         items={attractions.map((a: any) => a.title)}
         handles={attractions.map((a: any) => a.handle)}
@@ -345,38 +347,6 @@ const RECOMMENDED_PRODUCTS_QUERY = `#graphql
   }
 ` as const;
 
-const PRODUCTS_QUERY = `#graphql
-  query Products($country: CountryCode, $language: LanguageCode)
-    @inContext(country: $country, language: $language) {
-    collections(first: 1, reverse: false, query: "Admission") {
-      nodes {
-        products(first: 100) {
-          nodes {
-            id
-            title
-            handle
-            descriptionHtml
-            priceRange {
-              minVariantPrice {
-                amount
-                currencyCode
-              }
-            }
-            images(first: 1) {
-              nodes {
-                id
-                url
-                altText
-                width
-                height
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-` as const;
 
 const HOURS_QUERY = `#graphql
   query CalendarHours {

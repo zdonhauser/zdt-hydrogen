@@ -132,24 +132,44 @@ function ProductItem({
   loading?: 'eager' | 'lazy';
 }) {
   const variantUrl = useVariantUrl(product.handle);
+  const isAvailable = product.availableForSale;
+  
   return (
     <Link
-      className="flex flex-col items-center border-2 border-[var(--color-dark)] bg-[var(--color-light)] rounded-xl p-4 shadow-md hover:scale-105 hover:shadow-lg transition-all"
+      className={`relative flex flex-col items-center border-2 border-[var(--color-dark)] rounded-xl p-4 shadow-md transition-all ${
+        isAvailable 
+          ? 'bg-[var(--color-light)] hover:scale-105 hover:shadow-lg' 
+          : 'bg-gray-200 opacity-75'
+      }`}
       key={product.id}
       prefetch="intent"
       to={variantUrl}
     >
-      {product.featuredImage && (
-        <Image
-          alt={product.featuredImage.altText || product.title}
-          aspectRatio="1/1"
-          data={product.featuredImage}
-          loading={loading}
-          sizes="(min-width: 45em) 400px, 100vw"
-        />
-      )}
-      <h4 className="text-md font-bold mt-2 text-center">{product.title}</h4>
-      <small className="text-sm text-[var(--color-dark)]">
+      <div className="relative w-full">
+        {product.featuredImage && (
+          <div className="relative">
+            <Image
+              alt={product.featuredImage.altText || product.title}
+              aspectRatio="1/1"
+              data={product.featuredImage}
+              loading={loading}
+              sizes="(min-width: 45em) 400px, 100vw"
+              className={isAvailable ? '' : 'grayscale opacity-60'}
+            />
+            
+            {!isAvailable && (
+              <div className="absolute top-2 right-2 bg-[var(--color-brand-red)] text-white font-black text-sm px-3 py-1 rounded-full border-2 border-[var(--color-brand-dark)] shadow-lg transform rotate-12 z-10">
+                SOLD OUT
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
+      <h4 className={`text-md font-bold mt-2 text-center ${isAvailable ? 'text-[var(--color-brand-dark)]' : 'text-gray-600'}`}>
+        {product.title}
+      </h4>
+      <small className={`text-sm ${isAvailable ? 'text-[var(--color-brand-dark)]' : 'text-gray-500'}`}>
         <Money data={product.priceRange.minVariantPrice} />
       </small>
     </Link>
@@ -165,6 +185,8 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     id
     handle
     title
+    availableForSale
+    totalInventory
     featuredImage {
       id
       altText
@@ -186,6 +208,7 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
         title
         sku
         availableForSale
+        quantityAvailable
       }
     }
   }

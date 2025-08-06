@@ -33,50 +33,57 @@ export default function AccountLayout() {
 
   const heading = customer
     ? customer.firstName
-      ? `Welcome, ${customer.firstName}`
-      : `Welcome to your account.`
+      ? `Welcome, ${customer.firstName}!`
+      : `Welcome to your account!`
     : 'Account Details';
 
   return (
-    <div className="account">
-      <h1>{heading}</h1>
-      <br />
-      <AccountMenu />
-      <br />
-      <br />
-      <Outlet context={{customer}} />
+    <div className="w-full px-4 py-8 bg-[var(--color-brand-cream)] min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wide text-[var(--color-brand-dark)] mb-6">
+            {heading}
+          </h1>
+          <AccountMenu />
+        </div>
+        
+        {/* Content */}
+        <Outlet context={{customer}} />
+      </div>
     </div>
   );
 }
 
 function AccountMenu() {
-  function isActiveStyle({
+  function getNavLinkClasses({
     isActive,
     isPending,
   }: {
     isActive: boolean;
     isPending: boolean;
   }) {
-    return {
-      fontWeight: isActive ? 'bold' : undefined,
-      color: isPending ? 'grey' : 'black',
-    };
+    return `
+      px-6 py-3 font-black text-lg uppercase tracking-wide rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200
+      ${isActive 
+        ? 'bg-[var(--color-brand-yellow)] text-[var(--color-brand-dark)] scale-105' 
+        : 'bg-white text-[var(--color-brand-dark)] hover:bg-[var(--color-brand-cream)]'
+      }
+      ${isPending ? 'opacity-50' : ''}
+    `;
   }
 
   return (
-    <nav role="navigation">
-      <NavLink to="/account/orders" style={isActiveStyle}>
-        Orders &nbsp;
+    <nav role="navigation" className="flex flex-wrap justify-center gap-4 mb-8">
+      <NavLink to="/account/orders" className={getNavLinkClasses}>
+        Orders
       </NavLink>
-      &nbsp;|&nbsp;
-      <NavLink to="/account/profile" style={isActiveStyle}>
-        &nbsp; Profile &nbsp;
+      <NavLink to="/account/profile" className={getNavLinkClasses}>
+        Profile
       </NavLink>
-      &nbsp;|&nbsp;
-      <NavLink to="/account/addresses" style={isActiveStyle}>
-        &nbsp; Addresses &nbsp;
+      <NavLink to="/account/addresses" className={getNavLinkClasses}>
+        Addresses
       </NavLink>
-      &nbsp;|&nbsp;
       <Logout />
     </nav>
   );
@@ -84,8 +91,13 @@ function AccountMenu() {
 
 function Logout() {
   return (
-    <Form className="account-logout" method="POST" action="/account/logout">
-      &nbsp;<button type="submit">Sign out</button>
+    <Form method="POST" action="/account/logout">
+      <button 
+        type="submit"
+        className="px-6 py-3 font-black text-lg uppercase tracking-wide rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 bg-[var(--color-brand-red)] hover:bg-[var(--color-brand-red-hover)] text-white"
+      >
+        Sign Out
+      </button>
     </Form>
   );
 }

@@ -146,11 +146,12 @@ export default function Hero({id}: HeroProps) {
             alt="ZDT's Logo"
             className="w-64 md:w-80 mb-6 drop-shadow-[6px_6px_0_rgba(0,0,0,0.9)]"
           />
-          <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.8)] tracking-tight uppercase">
-            FAMILY FUN AWAITS
+          <h1 className="text-4xl md:text-6xl font-black text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.8)] tracking-tight uppercase text-center">
+            ZDT'S FINAL SEASON<br />
+            <span className="text-[var(--color-brand-yellow)] drop-shadow-[4px_4px_0_rgba(0,0,0,0.9)]">ENDS AUGUST 17, 2025</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base md:text-lg text-white font-semibold drop-shadow-md">
-            Adrenaline for all ages. Smiles guaranteed.
+          <p className="mt-4 max-w-xl text-base md:text-lg text-white font-bold drop-shadow-md text-center">
+            Thank you for 18 amazing years! Visit us one more time before the gates close.
           </p>
           <Link
             to="/products/unlimitedwristband"
