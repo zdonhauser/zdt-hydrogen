@@ -14,7 +14,7 @@ export default function GroupsPage() {
         <h1 className="text-5xl md:text-6xl font-black text-center mb-8 drop-shadow-lg">Group Trips</h1>
 
         <p className="text-center text-xl md:text-2xl font-bold max-w-3xl mb-10 m-auto drop-shadow-lg p-4">
-          Bring your group for an unforgettable day at ZDT's! Perfect for school field trips, 
+          Bring your group for an unforgettable day at ZDT&apos;s! Perfect for school field trips, 
           corporate events, church groups, and more. Enjoy unlimited access to all rides, 
           attractions, and video games at special group rates.
         </p>
@@ -96,7 +96,7 @@ export default function GroupsPage() {
             <p className="text-lg">
               One adult wristband will be provided free for every 10 children to participate. 
               Other adults (16+) may come in for free to watch. Additional adult bands are 
-              the same price as the children's bands for those wishing to participate.
+              the same price as the children&apos;s bands for those wishing to participate.
             </p>
           </div>
 

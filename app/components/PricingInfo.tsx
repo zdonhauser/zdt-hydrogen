@@ -107,10 +107,10 @@ export function PricingInfo({ showTitle = true, className = '' }: PricingInfoPro
 
           <div className="bg-white/20 rounded-lg p-4">
             <h4 className="text-lg font-bold text-white mb-2">
-              Under 42" Tall - $25.99
+              Under 42&quot; Tall - $25.99
             </h4>
             <p className="text-sm text-white">
-              Height Measured at the Gate; Must be over 36" to participate in any rides other than video games and playground. For reference, this height range includes most 3 and 4 year olds, and also includes some 2 or 5 year olds.
+              Height Measured at the Gate; Must be over 36&quot; to participate in any rides other than video games and playground. For reference, this height range includes most 3 and 4 year olds, and also includes some 2 or 5 year olds.
             </p>
           </div>
         </div>
@@ -120,8 +120,8 @@ export function PricingInfo({ showTitle = true, className = '' }: PricingInfoPro
       <div className="bg-blue-100 border-2 border-blue-600 rounded-lg p-4">
         <p className="text-sm text-blue-800 font-semibold">
           *Water rides are seasonal. For hours, see{' '}
-          <Link to="/calendar" className="text-blue-600 hover:underline">
-            zdtamusement.com/hours
+          <Link to="/pages/hours" className="text-blue-600 hover:underline">
+            zdtamusement.com/pages/hours
           </Link>
         </p>
       </div>

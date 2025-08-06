@@ -134,8 +134,10 @@ export function ProductForm({
   }, [productOptions, isChooseYourDate]);
 
   // Get available inventory for the selected variant
-  const maxQuantity = selectedVariant?.quantityAvailable || 999;
-  const showInventoryWarning = maxQuantity < 10 && maxQuantity > 0;
+  // If availableForSale is true but quantityAvailable is 0, null, or negative, allow overselling
+  const allowsOverselling = selectedVariant?.availableForSale && (selectedVariant?.quantityAvailable == null || selectedVariant?.quantityAvailable <= 0);
+  const maxQuantity = allowsOverselling ? 999 : (selectedVariant?.quantityAvailable || 999);
+  const showInventoryWarning = !allowsOverselling && maxQuantity < 10 && maxQuantity > 0;
   
   const [quantity, setQuantity] = useState(1);
   const [selectedSellingPlanId, setSelectedSellingPlanId] = useState<
@@ -578,14 +580,14 @@ useEffect(() => {
               </div>
               
               {/* Inventory Display */}
-              {showInventoryWarning && (
+              {!allowsOverselling && showInventoryWarning && (
                 <div className="text-center">
                   <p className="text-sm font-bold text-[var(--color-brand-red)]">
                     Only {maxQuantity} left in stock!
                   </p>
                 </div>
               )}
-              {maxQuantity < 999 && maxQuantity >= 10 && (
+              {!allowsOverselling && maxQuantity < 999 && maxQuantity >= 10 && (
                 <div className="text-center">
                   <p className="text-xs font-semibold text-gray-600">
                     {maxQuantity} available
