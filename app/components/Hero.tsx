@@ -150,7 +150,7 @@ export default function Hero({id}: HeroProps) {
             ZDT'S FINAL SEASON<br />
             <span className="text-[var(--color-brand-yellow)] drop-shadow-[4px_4px_0_rgba(0,0,0,0.9)]">ENDS AUGUST 17, 2025</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base md:text-lg text-white font-bold drop-shadow-md text-center">
+          <p className="mt-4 max-w-xl text-base md:text-lg text-white font-bold [text-shadow:_1px_1px_0_rgb(0_0_0),_-1px_-1px_0_rgb(0_0_0),_1px_-1px_0_rgb(0_0_0),_-1px_1px_0_rgb(0_0_0),_2px_2px_4px_rgba(0,0,0,0.8)] md:drop-shadow-md text-center">
             Thank you for 18 amazing years! Visit us one more time before the gates close.
           </p>
           <Link

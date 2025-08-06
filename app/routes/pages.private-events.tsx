@@ -66,10 +66,10 @@ export default function PrivateEventsPage() {
                 <li>• Holiday Celebrations</li>
                 <li>• School Field Trips</li>
                 <li>• Project Graduations</li>
+                <li>• Sports Teams</li>
                 <li>• Bar/Bat Mitzvahs</li>
                 <li>• Large Birthday Parties</li>
                 <li>• Team Building Events</li>
-                <li>• Fundraisers</li>
               </ul>
             </div>
 

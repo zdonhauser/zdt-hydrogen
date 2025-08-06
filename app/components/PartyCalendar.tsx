@@ -306,9 +306,13 @@ export default function PartyCalendar({products, selectedRoom}: {products: any[]
                             ) : (
                               <div
                                 key={slot.variantId}
-                                className="bg-gray-300 text-gray-600 font-bold px-3 py-2 rounded-full border-2 border-gray-400 text-sm cursor-not-allowed"
+                                className="relative bg-gray-300 text-gray-600 font-bold px-3 py-2 rounded-full border-2 border-black text-sm cursor-not-allowed"
+                                title="This time slot is already booked"
                               >
-                                {slot.timeSlot}
+                                <span className="line-through">{slot.timeSlot}</span>
+                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-black uppercase">
+                                  Booked
+                                </span>
                               </div>
                             ),
                           )}

@@ -41,10 +41,10 @@ export default function PartyPage() {
               <h2 className="text-xl font-bold mb-2 text-center">
                 {room.name}
               </h2>
-              <h4 className="text-md text-red-600 mb-4 text-center">
+              <h4 className="text-lg md:text-xl font-black text-red-600 mb-4 text-center">
                 {room.price}
                 <br />
-                <small>Minimum: {room.minimum}</small>
+                <span className="text-base md:text-lg font-bold">Minimum: {room.minimum}</span>
               </h4>
               <div className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold px-4 py-2 rounded-full border-2 border-[var(--color-dark)] mb-4 pointer-events-none">
                 Book Now
@@ -79,10 +79,11 @@ export default function PartyPage() {
             </div>
           ))}
         </div>
-
-        <button className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] active:scale-95 transition-transform font-bold px-10 py-4 rounded-full border-2 border-[var(--color-dark)] mb-12 shadow-xl text-[var(--color-dark)]">
-          Book Now
-        </button>
+        <Link to="/collections/party-booking">
+          <button className="bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] active:scale-95 transition-transform font-bold px-10 py-4 rounded-full border-2 border-[var(--color-dark)] mb-12 shadow-xl text-[var(--color-dark)]">
+            Book Now
+          </button>
+        </Link>
 
         <div className="max-w-3xl text-center mb-12 p-4">
           <p className="text-lg md:text-xl font-bold drop-shadow-lg">

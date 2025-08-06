@@ -218,7 +218,13 @@ export function PartyForm({
     if (partyType === 'Team' && (!teamName || !teamActivity)) return false;
     if (partyType === 'Company' && !companyName) return false;
     if (partyType === 'Other' && !otherParty) return false;
-    if (drinkChoices.length === 0) return false;
+    // For Midway and Turning Point rooms, only require drinks if pizza is selected
+    if (roomName && (roomName.includes('Midway') || roomName.includes('Turning'))) {
+      if (foodOption === '$7' && drinkChoices.length === 0) return false;
+    } else {
+      // For other rooms, always require drinks
+      if (drinkChoices.length === 0) return false;
+    }
     return true;
   };
 
@@ -260,9 +266,18 @@ export function PartyForm({
       setFormError('Please describe the party.');
       return false;
     }
-    if (drinkChoices.length === 0) {
-      setFormError('Please select at least one drink option.');
-      return false;
+    // For Midway and Turning Point rooms, only require drinks if pizza is selected
+    if (roomName && (roomName.includes('Midway') || roomName.includes('Turning'))) {
+      if (foodOption === '$7' && drinkChoices.length === 0) {
+        setFormError('Please select at least one drink option for your pizza order.');
+        return false;
+      }
+    } else {
+      // For other rooms, always require drinks
+      if (drinkChoices.length === 0) {
+        setFormError('Please select at least one drink option.');
+        return false;
+      }
     }
     setFormError(null);
     return true;
@@ -499,6 +514,11 @@ export function PartyForm({
       case 2: // Guest Count
         return numParticipants >= roomDetails.minParticipants;
       case 3: // Pizza & Drinks
+        // For Midway and Turning Point rooms, only require drink selection if pizza is selected
+        if (roomName && (roomName.includes('Midway') || roomName.includes('Turning'))) {
+          return foodOption === '$7' ? drinkChoices.length > 0 : true;
+        }
+        // For other rooms, always require drink selection
         return drinkChoices.length > 0;
       case 4: // Add-ons (optional)
         return true;
@@ -535,7 +555,12 @@ export function PartyForm({
       } else if (currentStep === 2) {
         setFormError(`A minimum of ${roomDetails.minParticipants} participants is required for the ${roomDetails.room} room.`);
       } else if (currentStep === 3) {
-        setFormError('Please select at least one drink choice.');
+        // For Midway and Turning Point rooms, only show error if pizza is selected
+        if (roomName && (roomName.includes('Midway') || roomName.includes('Turning')) && foodOption === '$7') {
+          setFormError('Please select at least one drink choice for your pizza order.');
+        } else if (!roomName || (!roomName.includes('Midway') && !roomName.includes('Turning'))) {
+          setFormError('Please select at least one drink choice.');
+        }
       } else if (currentStep === 5) {
         setFormError('Please complete all contact information and acknowledgements.');
       }
@@ -798,7 +823,7 @@ export function PartyForm({
               <ul className="text-sm text-black space-y-1">
                 <li>• Unlimited wristband valid for entire operating day</li>
                 <li>• All video games, rides, and attractions</li>
-                <li>• One medium drink per person</li>
+                {roomName && (roomName.includes('Midway') || roomName.includes('Turning')) ? null : <li>• One medium drink per person</li>}
               </ul>
             </div>
             <div className="bg-blue-50 border-2 border-black rounded-lg p-3">
@@ -1129,7 +1154,9 @@ export function PartyForm({
               $7.99 Each • $4.99 Refills
             </p>
             <p className="text-xs text-black text-center">
-              One medium drink per participant is already included in your party rate! If ordered, pitchers are for additional drinks or refills.
+              {roomName && (roomName.includes('Midway') || roomName.includes('Turning'))
+                ? 'Drink pitchers can be ordered for your party.'
+                : 'One medium drink per participant is already included in your party rate! If ordered, pitchers are for additional drinks or refills.'}
             </p>
             <br/>
             <div className="grid grid-cols-2 gap-2">

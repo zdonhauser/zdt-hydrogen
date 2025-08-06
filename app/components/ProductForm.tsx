@@ -1,4 +1,4 @@
-import { Link, useNavigate, useFetcher } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {type MappedProductOptions, CartForm} from '@shopify/hydrogen';
 import type {
   Maybe,
@@ -21,7 +21,6 @@ export function ProductForm({
 }) {
   const navigate = useNavigate();
   const {open} = useAside();
-  const fetcher = useFetcher();
 
   const isChooseYourDate = tags?.includes?.('chooseyourdate');
   const requireMemberNameAndDOB = tags?.includes?.('requireMemberNameAndDOB');
@@ -714,7 +713,7 @@ useEffect(() => {
               </p>
             </div>
             
-            <div className="bg-[var(--color-brand-cream)] border-2 border-[var(--color-brand-dark)] rounded-lg p-4 mb-6">
+            <div className="bg-[var(--color-brand-cream)] border-2 border-[var(--color-brand-dark)] rounded-lg p-4 mb-4">
               <p className="text-sm font-semibold mb-2">Your combo meal includes one of the following:</p>
               <ul className="grid grid-cols-2 gap-2 text-sm">
                 <li>• Cheeseburger Combo</li>
@@ -730,28 +729,41 @@ useEffect(() => {
               </p>
             </div>
             
+            <div className="bg-yellow-50 border-2 border-[var(--color-brand-dark)] rounded-lg p-3 mb-6">
+              <p className="text-xs font-bold text-gray-700 text-center">
+                ⚠️ Note: Menu items are subject to availability. Some meal options may not be available on your visit date due to inventory.
+              </p>
+            </div>
+            
             <div className="flex gap-4">
               {/* Yes - Add Combo Meal */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedVariant) {
-                    fetcher.submit(
-                      { 
-                        wristbandVariantId: selectedVariant.id,
-                        quantity: quantity.toString()
-                      },
-                      { method: 'POST', action: '/combo-meal/add' }
-                    );
-                    setShowEatAndPlayModal(false);
-                    setTimeout(() => open('cart'), 500);
-                  }
-                }}
-                disabled={fetcher.state !== 'idle'}
-                className="flex-1 bg-[var(--color-brand-green)] hover:bg-[var(--color-brand-green-hover)] text-white font-black text-lg px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"
+              <CartForm 
+                route="/cart" 
+                inputs={{ 
+                  lines: selectedVariant ? [
+                    { merchandiseId: selectedVariant.id, quantity },
+                    { merchandiseId: 'gid://shopify/ProductVariant/31774731534449', quantity } // Combo meal
+                  ] : [] 
+                }} 
+                action={CartForm.ACTIONS.LinesAdd}
               >
-                Yes, Add Combo Meal!
-              </button>
+                {(cartFetcher: any) => (
+                  <button
+                    type="submit"
+                    onClick={() => {
+                      // Let the form submit first, then close modal and open cart
+                      setTimeout(() => {
+                        setShowEatAndPlayModal(false);
+                        open('cart');
+                      }, 100);
+                    }}
+                    disabled={cartFetcher.state !== 'idle'}
+                    className="flex-1 bg-[var(--color-brand-green)] hover:bg-[var(--color-brand-green-hover)] text-white font-black text-lg px-6 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                  >
+                    Yes, Add Combo Meal!
+                  </button>
+                )}
+              </CartForm>
               
               {/* No - Wristband Only */}
               <CartForm 
