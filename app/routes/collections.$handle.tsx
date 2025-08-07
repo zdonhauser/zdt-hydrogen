@@ -13,7 +13,7 @@ import PartyCalendar from '~/components/PartyCalendar';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
-  return [{title: `Hydrogen | ${data?.collection.title ?? ''} Collection`}];
+  return [{title: `ZDT's Amusement Park | ${data?.collection.title ?? ''}`}];
 };
 
 export async function loader(args: LoaderFunctionArgs) {

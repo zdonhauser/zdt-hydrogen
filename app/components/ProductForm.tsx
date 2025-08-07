@@ -806,17 +806,26 @@ function ProductOptionSwatch({
   const image = swatch?.image?.previewImage?.url;
   const color = swatch?.color;
 
-  if (!image && !color) return name;
+  // If no swatch data, just return the name
+  if (!image && !color) return <span>{name}</span>;
 
   return (
-    <div
-      aria-label={name}
-      className="product-option-label-swatch"
-      style={{
-        backgroundColor: color || 'transparent',
-      }}
-    >
-      {!!image && <img src={image} alt={name} />}
+    <div className="flex flex-col items-center gap-2">
+      {/* Color swatch or image */}
+      {(color || image) && (
+        <div
+          aria-label={name}
+          className="w-12 h-12 rounded-lg border-2 border-black"
+          style={{
+            backgroundColor: color || 'transparent',
+            backgroundImage: image ? `url(${image})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      )}
+      {/* Always show the name below the swatch */}
+      <span className="text-sm font-bold">{name}</span>
     </div>
   );
 }

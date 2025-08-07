@@ -3,7 +3,7 @@ import { useLoaderData, type MetaFunction } from 'react-router';
 import {Image} from '@shopify/hydrogen';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
-  return [{title: `Hydrogen | ${data?.article.title ?? ''} article`}];
+  return [{title: `ZDT's Amusement Park | ${data?.article.title ?? ''}`}];
 };
 
 export async function loader(args: LoaderFunctionArgs) {

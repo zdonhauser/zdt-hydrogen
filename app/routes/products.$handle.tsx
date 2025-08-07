@@ -105,7 +105,10 @@ export default function Product() {
                 <div className="grid grid-cols-1 gap-0">
                   <div className="p-8">
                     <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-w-md mx-auto mb-6">
-                      <ProductImage image={selectedVariant?.image} />
+                      <ProductImage 
+                image={selectedVariant?.image} 
+                media={product.media?.nodes} 
+                selectedVariantId={selectedVariant?.id} />
                     </div>
                     <div
                       className="mt-4 mb-6 text-center max-w-4xl mx-auto product-description"
@@ -125,7 +128,10 @@ export default function Product() {
                 <div className="grid grid-cols-1 gap-0">
                   <div className="p-8">
                     <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-w-md mx-auto mb-6">
-                      <ProductImage image={selectedVariant?.image} />
+                      <ProductImage 
+                image={selectedVariant?.image} 
+                media={product.media?.nodes} 
+                selectedVariantId={selectedVariant?.id} />
                     </div>
                     <div
                       className="mt-4 mb-6 text-center max-w-4xl mx-auto product-description"
@@ -148,7 +154,12 @@ export default function Product() {
               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-tight drop-shadow-md">
                 {title}
               </h1>
-              <ProductImage image={selectedVariant?.image} />
+              <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-w-md">
+                <ProductImage 
+                  image={selectedVariant?.image} 
+                  media={product.media?.nodes} 
+                  selectedVariantId={selectedVariant?.id} />
+              </div>
 
               <div
                 className="max-w-4xl product-description"
@@ -280,6 +291,20 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantExistence
     encodedVariantAvailability
     requiresSellingPlan
+    media(first: 10) {
+      nodes {
+        ... on MediaImage {
+          id
+          image {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+    }
     options {
       name
       optionValues {

@@ -3,7 +3,7 @@ import { useLoaderData, type MetaFunction } from 'react-router';
 import PartyPage from '~/components/PartyPage';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
-  return [{title: `Hydrogen | ${data?.page.title ?? ''}`}];
+  return [{title: `ZDT's Amusement Park | ${data?.page.title ?? ''}`}];
 };
 
 export async function loader(args: LoaderFunctionArgs) {
