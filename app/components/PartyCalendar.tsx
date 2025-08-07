@@ -2,7 +2,12 @@ import {useState, useMemo} from 'react';
 import { Link } from 'react-router';
 
 export default function PartyCalendar({products, selectedRoom}: {products: any[], selectedRoom: string | null}) {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => {
+    const now = new Date();
+    // Set time to midnight for consistent date comparison
+    now.setHours(0, 0, 0, 0);
+    return now;
+  }, []);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -130,6 +135,11 @@ export default function PartyCalendar({products, selectedRoom}: {products: any[]
               const dateKey = formatDateKey(date);
               const exists = availableDates[dateKey]?.length > 0;
               
+              // Check if this is today or in the past (block same-day bookings)
+              const tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              const isPastOrToday = date < tomorrow;
+              
               // Check availability based on selected room
               let isAvailable = false;
               let hasOtherRooms = false;
@@ -153,33 +163,43 @@ export default function PartyCalendar({products, selectedRoom}: {products: any[]
                 <button
                   key={idx}
                   onClick={() => {
-                    setSelectedDate(dateKey);
-                    // Scroll to room times section after a brief delay
-                    setTimeout(() => {
-                      const roomSection = document.querySelector('[data-room-times]');
-                      if (roomSection) {
-                        roomSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }, 100);
+                    if (!isPastOrToday) {
+                      setSelectedDate(dateKey);
+                      // Scroll to room times section after a brief delay
+                      setTimeout(() => {
+                        const roomSection = document.querySelector('[data-room-times]');
+                        if (roomSection) {
+                          roomSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }
                   }}
+                  disabled={isPastOrToday}
+                  title={isPastOrToday ? 'Bookings must be made at least one day in advance' : ''}
                   className={`h-10 sm:h-20 flex flex-col items-center justify-center border-2 rounded-lg ${
-                    exists
-                      ? selectedDate === dateKey
-                        ? isAvailable 
-                          ? 'bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
-                          : hasOtherRooms
-                            ? 'bg-[var(--color-brand-blue)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
-                            : 'bg-gray-400 text-black font-bold border-[var(--color-brand-dark)] scale-120'
-                        : isAvailable
-                          ? 'bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
-                          : hasOtherRooms
-                            ? 'bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
-                            : 'bg-gray-400 hover:bg-gray-600 text-black border-gray-600'
-                      : 'bg-[var(--color-light)] text-gray-400 border-gray-300'
+                    isPastOrToday
+                      ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed opacity-50'
+                      : exists
+                        ? selectedDate === dateKey
+                          ? isAvailable 
+                            ? 'bg-[var(--color-brand-yellow)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
+                            : hasOtherRooms
+                              ? 'bg-[var(--color-brand-blue)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)] scale-120'
+                              : 'bg-gray-400 text-black font-bold border-[var(--color-brand-dark)] scale-120'
+                          : isAvailable
+                            ? 'bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
+                            : hasOtherRooms
+                              ? 'bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-[var(--color-dark)] font-bold border-[var(--color-brand-dark)]'
+                              : 'bg-gray-400 hover:bg-gray-600 text-black border-gray-600'
+                        : 'bg-[var(--color-light)] text-gray-400 border-gray-300'
                   }`}
                 >
                   {date.getDate()}
-                  {exists && (
+                  {isPastOrToday ? (
+                    <span className="text-xs mt-1 hidden md:block">
+                      Unavailable
+                    </span>
+                  ) : exists && (
                     <span className="text-xs mt-1 hidden md:block">
                       {isAvailable 
                         ? selectedRoom ? `${selectedRoom} Available` : 'Available'
