@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { type MetaFunction } from '@shopify/remix-oxygen';
+import { useState, useEffect } from 'react';
+import { type MetaFunction, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
+import { Form, useNavigation, useActionData } from 'react-router';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
 
 export const meta: MetaFunction = () => {
@@ -7,9 +8,25 @@ export const meta: MetaFunction = () => {
 };
 
 export default function ApplyPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigation = useNavigation();
+  const actionData = useActionData<{success: boolean; error?: string}>();
   const [submitMessage, setSubmitMessage] = useState('');
   const [employerCount, setEmployerCount] = useState(2);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        setSubmitMessage('✅ Your application has been submitted successfully! We will review your application and contact you if there are any suitable positions available.');
+        setHasSubmitted(true);
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setSubmitMessage('❌ There was an error submitting your application. Please try again later.');
+        setHasSubmitted(false); // Allow retry on error
+      }
+    }
+  }, [actionData]);
 
   const addEmployer = () => {
     setEmployerCount(prev => prev + 1);
@@ -109,102 +126,6 @@ export default function ApplyPage() {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    setSubmitMessage('');
-
-    const formData = new FormData(e.currentTarget);
-    
-    // Build comprehensive message
-    const message = `
-NEW EMPLOYMENT APPLICATION SUBMISSION
-
-PERSONAL INFORMATION:
-• Date of Application: ${formData.get('applicationDate')}
-• Name: ${formData.get('firstName')} ${formData.get('lastName')}
-• Address: ${formData.get('address')}
-• City, State, ZIP: ${formData.get('city')}, ${formData.get('state')} ${formData.get('zipCode')}
-• Email: ${formData.get('email')}
-• Phone: ${formData.get('phone')}
-
-ELIGIBILITY:
-• Age: ${formData.get('age')} years old
-• US Citizen/Work Eligible: ${formData.get('workEligible')}
-• TX Driver's License: ${formData.get('driversLicense')}
-• Currently in School: ${formData.get('currentlyInSchool')}
-• Last Grade Completed: ${formData.get('lastGradeCompleted')}
-
-EMPLOYMENT PREFERENCES:
-• Looking for Part-time Job: ${formData.get('partTimeInterest')}
-• Desired Pay: ${formData.get('desiredPay')}
-• How did you hear about us: ${formData.get('referralSource')}
-• Desired Positions: ${formData.getAll('desiredPositions').join(', ')}
-• Available Weekends: ${formData.get('weekendAvailability')}
-• Available Weekdays: ${formData.get('weekdayAvailability')}
-• Times NOT Available: ${formData.get('unavailableTimes')}
-
-ADDITIONAL INFORMATION:
-• Skills/Qualifications: ${formData.get('skills')}
-• Felony Convictions: ${formData.get('felonyConvictions')}
-
-REFERENCES:
-• Reference 1: ${formData.get('reference1Name')} - ${formData.get('reference1Phone')}
-• Reference 2: ${formData.get('reference2Name')} - ${formData.get('reference2Phone')}
-
-EMERGENCY CONTACT:
-• Name: ${formData.get('emergencyContactName')}
-• Phone: ${formData.get('emergencyContactPhone')}
-
-EMPLOYMENT HISTORY:
-${Array.from({length: employerCount}, (_, i) => {
-  const num = i + 1;
-  return `• Previous Employer ${num}: ${formData.get(`employer${num}Name`)}
-  Dates: ${formData.get(`employer${num}StartDate`)} to ${formData.get(`employer${num}EndDate`)}
-  Position/Pay: ${formData.get(`employer${num}Position`)} - ${formData.get(`employer${num}Pay`)}
-  Reason for Leaving: ${formData.get(`employer${num}Reason`)}`;
-}).join('\n\n')}
-
-AGREEMENTS:
-• Truthful Information: ${formData.get('truthfulInfo') ? 'Yes' : 'No'}
-• Background Investigation: ${formData.get('backgroundCheck') ? 'Yes' : 'No'}
-• Company Policies: ${formData.get('companyPolicies') ? 'Yes' : 'No'}
-• Photography Consent: ${formData.get('photographyConsent') ? 'Yes' : 'No'}
-• Drug Testing: ${formData.get('drugTesting') ? 'Yes' : 'No'}
-• Signature: ${formData.get('signature')}
-
----
-Submitted via ZDT's Employment Application Form
-    `.trim();
-
-    try {
-      const response = await fetch('https://eowj2r2mn07s5m6.m.pipedream.net', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: 'info@zdtamusement.com',
-          subject: 'New Employment Application Submission',
-          message: message,
-        }),
-      });
-
-      if (response.ok) {
-        setSubmitMessage('✅ Your application has been submitted successfully! We will review your application and contact you if there are any suitable positions available.');
-        (e.target as HTMLFormElement).reset();
-      } else {
-        throw new Error('Failed to submit');
-      }
-    } catch (error) {
-      setSubmitMessage('❌ There was an error submitting your application. Please try again or call us at (830) 386-0151.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="relative flex flex-col justify-center items-center px-4 py-10 text-[var(--color-dark)] overflow-hidden min-h-screen" style={{background: 'linear-gradient(135deg, var(--color-brand-red) 0%, var(--color-brand-red-hover) 100%)'}}>
@@ -235,12 +156,29 @@ Submitted via ZDT's Employment Application Form
           </div>
 
           {submitMessage && (
-            <div className="bg-white p-4 rounded-lg mb-6 text-center font-bold text-[var(--color-brand-dark)]">
+            <div className={`p-6 rounded-lg mb-6 text-center font-bold ${
+              hasSubmitted 
+                ? 'bg-green-100 text-green-800 border-4 border-green-600' 
+                : 'bg-red-100 text-red-800 border-4 border-red-600'
+            }`}>
               {submitMessage}
+              {hasSubmitted && (
+                <button
+                  onClick={() => {
+                    setHasSubmitted(false);
+                    setSubmitMessage('');
+                  }}
+                  className="block mx-auto mt-4 px-6 py-2 bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-bold rounded-lg transition-all"
+                >
+                  Submit Another Application
+                </button>
+              )}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 shadow-xl border-4 border-[var(--color-brand-dark)]">
+          {!hasSubmitted && (
+          <Form method="post" className="bg-white rounded-xl p-8 shadow-xl border-4 border-[var(--color-brand-dark)]">
+            <input type="hidden" name="employerCount" value={employerCount} />
             {/* Personal Information */}
             <div className="mb-8">
               <h3 className="text-2xl font-black text-[var(--color-brand-dark)] mb-4 border-b-2 border-[var(--color-brand-dark)] pb-2">
@@ -783,18 +721,114 @@ Submitted via ZDT's Employment Application Form
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={navigation.state === 'submitting' || hasSubmitted}
               className={`w-full text-xl font-black px-8 py-4 rounded-lg border-4 border-[var(--color-brand-dark)] shadow-xl transition-all duration-200 ${
-                isSubmitting
+                navigation.state === 'submitting' || hasSubmitted
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-[var(--color-brand-green)] hover:bg-[var(--color-brand-green-hover)] text-white hover:scale-105'
               }`}
             >
-              {isSubmitting ? 'Submitting Application...' : 'Submit Application'}
+              {navigation.state === 'submitting' ? 'Submitting Application...' : 'Submit Application'}
             </button>
-          </form>
+          </Form>
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+export async function action({ request }: LoaderFunctionArgs) {
+  const formData = await request.formData();
+  
+  // Get employer count to properly parse employment history
+  const employerCount = parseInt(formData.get('employerCount') as string) || 2;
+  
+  // Build comprehensive message
+  const message = `
+NEW EMPLOYMENT APPLICATION SUBMISSION
+
+PERSONAL INFORMATION:
+• Date of Application: ${formData.get('applicationDate')}
+• Name: ${formData.get('firstName')} ${formData.get('lastName')}
+• Address: ${formData.get('address')}
+• City, State, ZIP: ${formData.get('city')}, ${formData.get('state')} ${formData.get('zipCode')}
+• Email: ${formData.get('email')}
+• Phone: ${formData.get('phone')}
+
+ELIGIBILITY:
+• Age: ${formData.get('age')} years old
+• US Citizen/Work Eligible: ${formData.get('workEligible')}
+• TX Driver's License: ${formData.get('driversLicense')}
+• Currently in School: ${formData.get('currentlyInSchool')}
+• Last Grade Completed: ${formData.get('lastGradeCompleted')}
+
+EMPLOYMENT PREFERENCES:
+• Looking for Part-time Job: ${formData.get('partTimeInterest')}
+• Desired Pay: ${formData.get('desiredPay')}
+• How did you hear about us: ${formData.get('referralSource')}
+• Desired Positions: ${formData.getAll('desiredPositions').join(', ')}
+• Available Weekends: ${formData.get('weekendAvailability')}
+• Available Weekdays: ${formData.get('weekdayAvailability')}
+• Times NOT Available: ${formData.get('unavailableTimes')}
+
+ADDITIONAL INFORMATION:
+• Skills/Qualifications: ${formData.get('skills')}
+• Felony Convictions: ${formData.get('felonyConvictions')}
+
+REFERENCES:
+• Reference 1: ${formData.get('reference1Name')} - ${formData.get('reference1Phone')}
+• Reference 2: ${formData.get('reference2Name')} - ${formData.get('reference2Phone')}
+
+EMERGENCY CONTACT:
+• Name: ${formData.get('emergencyContactName')}
+• Phone: ${formData.get('emergencyContactPhone')}
+
+EMPLOYMENT HISTORY:
+${Array.from({length: employerCount}, (_, i) => {
+  const num = i + 1;
+  return `• Previous Employer ${num}: ${formData.get(`employer${num}Name`)}
+  Dates: ${formData.get(`employer${num}StartDate`)} to ${formData.get(`employer${num}EndDate`)}
+  Position/Pay: ${formData.get(`employer${num}Position`)} - ${formData.get(`employer${num}Pay`)}
+  Reason for Leaving: ${formData.get(`employer${num}Reason`)}`;
+}).join('\n\n')}
+
+AGREEMENTS:
+• Truthful Information: ${formData.get('truthfulInfo') ? 'Yes' : 'No'}
+• Background Investigation: ${formData.get('backgroundCheck') ? 'Yes' : 'No'}
+• Company Policies: ${formData.get('companyPolicies') ? 'Yes' : 'No'}
+• Photography Consent: ${formData.get('photographyConsent') ? 'Yes' : 'No'}
+• Drug Testing: ${formData.get('drugTesting') ? 'Yes' : 'No'}
+• Signature: ${formData.get('signature')}
+
+---
+Submitted via ZDT's Employment Application Form
+  `.trim();
+
+  try {
+    const response = await fetch('https://eon2vfigqmpnne.m.pipedream.net', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: 'info@zdtamusement.com',
+        subject: 'New Employment Application Submission',
+        message: message,
+        formName: 'Employment Application',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending to Pipedream:', error);
+    return { 
+      success: false, 
+      error: 'Failed to send application. Please try again later.' 
+    };
+  }
 }

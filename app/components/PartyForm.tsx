@@ -66,6 +66,17 @@ export function PartyForm({
 
   const roomDetails = getRoomDetails();
 
+  // Room time info based on room type
+  const getRoomTimeInfo = () => {
+    if (!roomName) return '1 Hour 45 Minutes';
+    
+    if (roomName.includes('Midway') || roomName.includes('Turning')) {
+      return '4 Hours + 1 Hour Setup';
+    } else {
+      return '1 Hour 45 Minutes';
+    }
+  };
+
   // Dynamic date/time parsing from variant SKU (format: MMDDYYHH)
   const getDateDetailsFromSKU = () => {
     const sku = selectedVariant?.sku;
@@ -816,14 +827,15 @@ export function PartyForm({
           {/* Party Rate Info */}
           <div className="bg-white border-4 border-black rounded-xl p-4 mb-4 shadow-lg">
             <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-3 tracking-wide">
-              Party Rate: $32/Wristband
+              Party Rate: ${roomDetails.baseRate}/Wristband
             </h2>
             <div className="bg-gray-50 border-2 border-black rounded-lg p-3 mb-4">
               <h3 className="text-base font-black text-black mb-2">What's Included:</h3>
               <ul className="text-sm text-black space-y-1">
-                <li>• Unlimited wristband valid for entire operating day</li>
-                <li>• All video games, rides, and attractions</li>
-                {roomName && (roomName.includes('Midway') || roomName.includes('Turning')) ? null : <li>• One medium drink per person</li>}
+                <li>• Room Time: {getRoomTimeInfo()}</li>
+                <li>• Unlimited rides, attractions & games all day</li>
+                {roomName && (roomName.includes('Carousel') || roomName.includes('Large')) && <li>• One free medium drink per wristband</li>}
+                <li>• Free adult observation passes</li>
               </ul>
             </div>
             <div className="bg-blue-50 border-2 border-black rounded-lg p-3">
@@ -887,6 +899,11 @@ export function PartyForm({
             <h2 className="text-xl md:text-2xl font-black uppercase text-center text-black mb-4 tracking-wide">
               Pizza Options
             </h2>
+            <div className="bg-blue-50 border-2 border-black rounded-lg p-3 mb-4">
+              <p className="text-xs text-black text-center font-bold">
+                Note: You'll have the option to add whole pizzas and drink pitchers on the next step!
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"

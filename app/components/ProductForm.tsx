@@ -731,7 +731,7 @@ useEffect(() => {
             
             <div className="bg-yellow-50 border-2 border-[var(--color-brand-dark)] rounded-lg p-3 mb-6">
               <p className="text-xs font-bold text-gray-700 text-center">
-                ⚠️ Note: Menu items are subject to availability. Some meal options may not be available on your visit date due to inventory.
+                ⚠️ Note: Menu items are subject to availability.
               </p>
             </div>
             

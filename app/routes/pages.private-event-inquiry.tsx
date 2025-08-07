@@ -20,6 +20,8 @@ export default function PrivateEventInquiryPage() {
           message: 'Your private event inquiry has been submitted successfully! We\'ll get back to you soon with more information.'
         });
         setHasSubmitted(true);
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setStatus({
           type: 'error',
@@ -51,11 +53,24 @@ export default function PrivateEventInquiryPage() {
         
         <div className="bg-[var(--color-light)] p-6 md:p-8 rounded-xl shadow-2xl border-4 border-[var(--color-brand-dark)]">
           {status.type && (
-            <div className={`p-4 mb-6 rounded-lg ${status.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`p-4 mb-6 rounded-lg font-bold text-center ${status.type === 'success' ? 'bg-green-100 text-green-800 border-4 border-green-600' : 'bg-red-100 text-red-800 border-4 border-red-600'}`}>
               {status.message}
+              {hasSubmitted && (
+                <button
+                  onClick={() => {
+                    setHasSubmitted(false);
+                    setStatus({type: null, message: ''});
+                  }}
+                  className="block mx-auto mt-4 px-6 py-2 bg-[var(--color-brand-yellow)] hover:bg-[var(--color-brand-yellow-hover)] text-[var(--color-brand-dark)] font-bold rounded-lg transition-all"
+                >
+                  Submit Another Inquiry
+                </button>
+              )}
             </div>
           )}
           
+          {!hasSubmitted && (
+          <>
           <div className="mb-6 p-4 bg-[var(--color-brand-yellow)] border-2 border-[var(--color-brand-dark)] rounded-lg">
             <p className="text-sm text-[var(--color-brand-dark)] font-semibold">
               <strong>Note:</strong> Private events must pay for at least 100 people to book.
@@ -214,6 +229,8 @@ export default function PrivateEventInquiryPage() {
               </p>
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>

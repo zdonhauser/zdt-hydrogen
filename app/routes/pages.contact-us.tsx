@@ -21,6 +21,8 @@ export default function ContactPage() {
           message: 'Your message has been sent successfully! We\'ll get back to you soon.'
         });
         setHasSubmitted(true);
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setStatus({
           type: 'error',
@@ -49,10 +51,22 @@ export default function ContactPage() {
         
         <div className="bg-[var(--color-light)] p-6 md:p-8 rounded-xl shadow-2xl border-4 border-[var(--color-brand-dark)]">
           {status.type && (
-            <div className={`p-4 mb-6 rounded-lg ${status.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`p-4 mb-6 rounded-lg font-bold text-center ${status.type === 'success' ? 'bg-green-100 text-green-800 border-4 border-green-600' : 'bg-red-100 text-red-800 border-4 border-red-600'}`}>
               {status.message}
+              {hasSubmitted && (
+                <button
+                  onClick={() => {
+                    setHasSubmitted(false);
+                    setStatus({type: null, message: ''});
+                  }}
+                  className="block mx-auto mt-4 px-6 py-2 bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-bold rounded-lg transition-all"
+                >
+                  Send Another Message
+                </button>
+              )}
             </div>
           )}
+          {!hasSubmitted && (
           <Form method="post" className="space-y-6" replace>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -119,7 +133,9 @@ export default function ContactPage() {
               </button>
             </div>
           </Form>
+          )}
           
+          {!hasSubmitted && (
           <div className="mt-12 pt-8 border-t-2 border-[var(--color-brand-blue)]">
             <h3 className="text-xl font-bold text-[var(--color-brand-dark)] mb-4">Visit Us</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -138,6 +154,7 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
