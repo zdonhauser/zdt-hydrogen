@@ -133,11 +133,12 @@ function ProductItem({
 }) {
   const variantUrl = useVariantUrl(product.handle);
   const isAvailable = product.availableForSale;
+  const isAttraction = product.tags?.includes('attraction');
   
   return (
     <Link
       className={`relative flex flex-col items-center border-2 border-[var(--color-dark)] rounded-xl p-4 shadow-md transition-all ${
-        isAvailable 
+        isAvailable || isAttraction
           ? 'bg-[var(--color-light)] hover:scale-105 hover:shadow-lg' 
           : 'bg-gray-200 opacity-75'
       }`}
@@ -154,10 +155,10 @@ function ProductItem({
               data={product.featuredImage}
               loading={loading}
               sizes="(min-width: 45em) 400px, 100vw"
-              className={isAvailable ? '' : 'grayscale opacity-60'}
+              className={isAvailable || isAttraction ? '' : 'grayscale opacity-60'}
             />
             
-            {!isAvailable && (
+            {!isAvailable && !isAttraction && (
               <div className="absolute top-2 right-2 bg-[var(--color-brand-red)] text-white font-black text-sm px-3 py-1 rounded-full border-2 border-[var(--color-brand-dark)] shadow-lg transform rotate-12 z-10">
                 SOLD OUT
               </div>
@@ -166,12 +167,14 @@ function ProductItem({
         )}
       </div>
       
-      <h4 className={`text-md font-bold mt-2 text-center ${isAvailable ? 'text-[var(--color-brand-dark)]' : 'text-gray-600'}`}>
+      <h4 className={`text-md font-bold mt-2 text-center ${isAvailable || isAttraction ? 'text-[var(--color-brand-dark)]' : 'text-gray-600'}`}>
         {product.title}
       </h4>
-      <small className={`text-sm ${isAvailable ? 'text-[var(--color-brand-dark)]' : 'text-gray-500'}`}>
-        <Money data={product.priceRange.minVariantPrice} />
-      </small>
+      {!isAttraction && (
+        <small className={`text-sm ${isAvailable || isAttraction ? 'text-[var(--color-brand-dark)]' : 'text-gray-500'}`}>
+          <Money data={product.priceRange.minVariantPrice} />
+        </small>
+      )}
     </Link>
   );
 }
@@ -185,6 +188,7 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     id
     handle
     title
+    tags
     availableForSale
     totalInventory
     featuredImage {

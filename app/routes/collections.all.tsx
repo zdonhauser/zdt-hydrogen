@@ -77,6 +77,9 @@ function ProductItem({
   loading?: 'eager' | 'lazy';
 }) {
   const variantUrl = useVariantUrl(product.handle);
+  const isAttraction = product.tags?.includes('attraction');
+  const isAvailable = product.availableForSale;
+  
   return (
     <Link
       className="product-item"
@@ -84,19 +87,28 @@ function ProductItem({
       prefetch="intent"
       to={variantUrl}
     >
-      {product.featuredImage && (
-        <Image
-          alt={product.featuredImage.altText || product.title}
-          aspectRatio="1/1"
-          data={product.featuredImage}
-          loading={loading}
-          sizes="(min-width: 45em) 400px, 100vw"
-        />
-      )}
+      <div className="relative">
+        {product.featuredImage && (
+          <Image
+            alt={product.featuredImage.altText || product.title}
+            aspectRatio="1/1"
+            data={product.featuredImage}
+            loading={loading}
+            sizes="(min-width: 45em) 400px, 100vw"
+          />
+        )}
+        {!isAvailable && !isAttraction && (
+          <div className="absolute top-2 right-2 bg-[var(--color-brand-red)] text-white font-black text-xs px-2 py-1 rounded-full border border-[var(--color-brand-dark)] shadow-lg z-10">
+            SOLD OUT
+          </div>
+        )}
+      </div>
       <h4>{product.title}</h4>
-      <small>
-        <Money data={product.priceRange.minVariantPrice} />
-      </small>
+      {!isAttraction && (
+        <small>
+          <Money data={product.priceRange.minVariantPrice} />
+        </small>
+      )}
     </Link>
   );
 }
@@ -110,6 +122,8 @@ const PRODUCT_ITEM_FRAGMENT = `#graphql
     id
     handle
     title
+    tags
+    availableForSale
     featuredImage {
       id
       altText

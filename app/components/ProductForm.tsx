@@ -554,6 +554,19 @@ useEffect(() => {
 
 {!(notAvailable || notOnline) && (
         <div className="mt-8 flex flex-col items-center gap-4 justify-center">
+          {/* Show price unless it's an attraction or sold out */}
+          {!tags?.includes('attraction') && selectedVariant?.availableForSale && selectedVariant?.price && (
+            <div className="text-center">
+              <p className="text-3xl font-black text-[var(--color-brand-dark)]">
+                ${parseFloat(selectedVariant.price.amount).toFixed(2)}
+                {selectedVariant.compareAtPrice && (
+                  <span className="ml-2 text-xl line-through text-gray-500">
+                    ${parseFloat(selectedVariant.compareAtPrice.amount).toFixed(2)}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
           <h5 className="text-xl font-black uppercase tracking-wide text-center text-[var(--color-brand-dark)]">
             {is4Packs ? 'Number of Fun Packs:' : isChooseYourDate ? 'Number of Wristbands:' : 'Quantity:'}
           </h5>
