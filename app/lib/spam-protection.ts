@@ -12,8 +12,8 @@ interface RateLimitEntry {
 // For production, consider using Redis or a database
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-// Clean up old entries every hour
-setInterval(() => {
+// Clean up old entries when checking (passive cleanup)
+function cleanupOldEntries() {
   const now = Date.now();
   const oneHourAgo = now - 60 * 60 * 1000;
   
@@ -22,7 +22,7 @@ setInterval(() => {
       rateLimitMap.delete(key);
     }
   }
-}, 60 * 60 * 1000);
+}
 
 export function checkForSpam(formData: FormData, clientIP?: string): SpamCheckResult {
   // 1. Check honeypot field (hidden field that should be empty)
@@ -42,6 +42,11 @@ export function checkForSpam(formData: FormData, clientIP?: string): SpamCheckRe
 
   // 3. Rate limiting by IP
   if (clientIP) {
+    // Clean up old entries periodically (passive cleanup)
+    if (rateLimitMap.size > 100) {
+      cleanupOldEntries();
+    }
+    
     const now = Date.now();
     const rateLimitWindow = 60 * 1000; // 1 minute
     const maxRequests = 3; // Max 3 submissions per minute
