@@ -1,6 +1,8 @@
 import { type MetaFunction, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
-import { Form, useNavigation, useSearchParams, useActionData } from 'react-router';
-import { useEffect, useState } from 'react';
+import { Form, useNavigation, useActionData } from 'react-router';
+import { useEffect, useState, useRef } from 'react';
+import { checkForSpam, getClientIP } from '~/lib/spam-protection';
+import { performSecurityCheck, escapeHtml } from '~/lib/security-utils';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Contact Us' }]  ;
@@ -8,10 +10,10 @@ export const meta: MetaFunction = () => {
 
 export default function ContactPage() {
   const navigation = useNavigation();
-  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<{type: 'success' | 'error' | null; message: string}>({type: null, message: ''});
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const actionData = useActionData<{success: boolean; error?: string}>();
+  const formLoadTime = useRef(Date.now());
 
   useEffect(() => {
     if (actionData) {
@@ -122,6 +124,22 @@ export default function ContactPage() {
             </div>
 
             <input type="hidden" name="formName" value="Contact Us" />
+            <input type="hidden" name="submission_time" value={formLoadTime.current} />
+            
+            {/* Honeypot field - hidden from real users */}
+            <div style={{position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, height: 0, width: 0, pointerEvents: 'none'}}>
+              <label htmlFor="website" aria-hidden="true" tabIndex={-1}>
+                Website
+              </label>
+              <input
+                type="text"
+                id="website"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
+            </div>
             
             <div className="pt-4">
               <button
@@ -164,18 +182,46 @@ export default function ContactPage() {
 // This would be the action that handles form submission
 export async function action({ request }: LoaderFunctionArgs) {
   const formData = await request.formData();
-  const name = formData.get('name');
-  const email = formData.get('email');
-  const subject = formData.get('subject');
-  const message = formData.get('message');
-  const formName = formData.get('formName');
+  
+  // Check for spam
+  const clientIP = getClientIP(request);
+  const spamCheck = checkForSpam(formData, clientIP);
+  
+  if (spamCheck.isSpam) {
+    console.warn(`Spam detected: ${spamCheck.reason}`);
+    // Return success to avoid letting spammers know they were caught
+    return { success: true };
+  }
+  
+  // Perform security validation and sanitization
+  const securityCheck = performSecurityCheck(formData, ['name', 'email', 'message']);
+  
+  if (!securityCheck.isValid) {
+    console.warn('Security validation failed:', securityCheck.errors);
+    return { 
+      success: false, 
+      error: 'Invalid input detected. Please check your submission.' 
+    };
+  }
+  
+  // Use sanitized data
+  const { name, email, subject, message } = securityCheck.sanitizedData;
+  const formName = escapeHtml(String(formData.get('formName') || ''));
 
+  // Additional validation for required fields
+  if (!name || !email || !message) {
+    return { 
+      success: false, 
+      error: 'Please fill in all required fields.' 
+    };
+  }
+  
   const payload = {
-    name,
-    email,
-    subject,
-    message,
-    formName,
+    name: escapeHtml(name),
+    email: escapeHtml(email),
+    subject: escapeHtml(subject || ''),
+    message: escapeHtml(message),
+    formName: formName,
   };
 
   try {

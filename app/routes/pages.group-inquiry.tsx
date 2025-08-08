@@ -1,6 +1,7 @@
 import { type MetaFunction, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { Form, useNavigation, useActionData } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { checkForSpam, getClientIP } from '~/lib/spam-protection';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Group Inquiry - ZDT\'s Amusement Park' }];
@@ -11,6 +12,7 @@ export default function GroupInquiryPage() {
   const [status, setStatus] = useState<{type: 'success' | 'error' | null; message: string}>({type: null, message: ''});
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const actionData = useActionData<{success: boolean; error?: string}>();
+  const formLoadTime = useRef(Date.now());
 
   useEffect(() => {
     if (actionData) {
@@ -294,6 +296,22 @@ export default function GroupInquiryPage() {
             </div>
 
             <input type="hidden" name="formName" value="Group Inquiry" />
+            <input type="hidden" name="submission_time" value={formLoadTime.current} />
+            
+            {/* Honeypot field - hidden from real users */}
+            <div style={{position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, height: 0, width: 0, pointerEvents: 'none'}}>
+              <label htmlFor="url" aria-hidden="true" tabIndex={-1}>
+                URL
+              </label>
+              <input
+                type="text"
+                id="url"
+                name="url"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
+            </div>
             
             <div className="pt-4">
               <button
@@ -325,6 +343,16 @@ export default function GroupInquiryPage() {
 
 export async function action({ request }: LoaderFunctionArgs) {
   const formData = await request.formData();
+  
+  // Check for spam
+  const clientIP = getClientIP(request);
+  const spamCheck = checkForSpam(formData, clientIP);
+  
+  if (spamCheck.isSpam) {
+    console.warn(`Spam detected in group inquiry: ${spamCheck.reason}`);
+    // Return success to avoid letting spammers know they were caught
+    return { success: true };
+  }
   
   // Collect all form data
   const contactName = formData.get('contactName');

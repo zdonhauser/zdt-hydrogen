@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { type MetaFunction, type LoaderFunctionArgs } from '@shopify/remix-oxygen';
 import { Form, useNavigation, useActionData } from 'react-router';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
+import { checkForSpam, getClientIP } from '~/lib/spam-protection';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Employment Application - ZDT\'s Amusement Park' }];
@@ -13,6 +14,7 @@ export default function ApplyPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [employerCount, setEmployerCount] = useState(2);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const formLoadTime = useRef(Date.now());
   
   useEffect(() => {
     if (actionData) {
@@ -179,6 +181,22 @@ export default function ApplyPage() {
           {!hasSubmitted && (
           <Form method="post" className="bg-white rounded-xl p-8 shadow-xl border-4 border-[var(--color-brand-dark)]">
             <input type="hidden" name="employerCount" value={employerCount} />
+            <input type="hidden" name="submission_time" value={formLoadTime.current} />
+            
+            {/* Honeypot field - hidden from real users */}
+            <div style={{position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, height: 0, width: 0, pointerEvents: 'none'}}>
+              <label htmlFor="website" aria-hidden="true" tabIndex={-1}>
+                Website
+              </label>
+              <input
+                type="text"
+                id="website"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
+            </div>
             {/* Personal Information */}
             <div className="mb-8">
               <h3 className="text-2xl font-black text-[var(--color-brand-dark)] mb-4 border-b-2 border-[var(--color-brand-dark)] pb-2">
@@ -740,6 +758,16 @@ export default function ApplyPage() {
 
 export async function action({ request }: LoaderFunctionArgs) {
   const formData = await request.formData();
+  
+  // Check for spam
+  const clientIP = getClientIP(request);
+  const spamCheck = checkForSpam(formData, clientIP);
+  
+  if (spamCheck.isSpam) {
+    console.warn(`Spam detected in employment application: ${spamCheck.reason}`);
+    // Return success to avoid letting spammers know they were caught
+    return { success: true };
+  }
   
   // Get employer count to properly parse employment history
   const employerCount = parseInt(formData.get('employerCount') as string) || 2;
