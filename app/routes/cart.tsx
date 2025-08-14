@@ -41,13 +41,25 @@ export async function action({request, context}: ActionFunctionArgs) {
       if (partyLines.length > 0) {
         // Create a new cart with just the party items (this clears the old cart)
         console.log('Creating new cart for party booking');
+        console.log('Original lines to add:', linesToAdd);
         
-        // Clean the input data for cart.create - remove fields that aren't part of CartLineInput
-        const cleanedLines = linesToAdd.map(line => ({
-          merchandiseId: line.merchandiseId,
-          quantity: line.quantity,
-          attributes: line.attributes,
-        }));
+        // Clean the input data for cart.create - include sellingPlanId for party bookings
+        const cleanedLines = linesToAdd.map(line => {
+          const cleanLine: any = {
+            merchandiseId: line.merchandiseId,
+            quantity: line.quantity,
+            attributes: line.attributes,
+          };
+          
+          // Include sellingPlanId if present (for card on file functionality)
+          if (line.sellingPlanId) {
+            cleanLine.sellingPlanId = line.sellingPlanId;
+          }
+          
+          return cleanLine;
+        });
+        
+        console.log('Cleaned lines for cart.create:', cleanedLines);
         
         result = await cart.create({
           lines: cleanedLines,

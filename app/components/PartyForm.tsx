@@ -167,6 +167,7 @@ export function PartyForm({
   const [ackEmail, setAckEmail] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedSellingPlanId, setSelectedSellingPlanId] = useState<string | null>(null);
 
   // Cost calculation state
   const [estimatedCost, setEstimatedCost] = useState({
@@ -298,6 +299,13 @@ export function PartyForm({
   const createCartLine = () => {
     if (!selectedVariant) return [];
 
+    // Debug logging
+    console.log('=== PartyForm Cart Debug ===');
+    console.log('Selected Variant:', selectedVariant);
+    console.log('Selling Plan Allocations:', selectedVariant.sellingPlanAllocations);
+    console.log('Selected Selling Plan ID:', selectedSellingPlanId);
+    console.log('Product requiresSellingPlan:', product.requiresSellingPlan);
+
     const attributes = [
       {key: 'Party Type', value: partyType},
       {
@@ -327,9 +335,14 @@ export function PartyForm({
 
     // Add food options
     if (foodOption) {
-      attributes.push({key: 'Food Option', value: foodOption});
-      if (pizzaType && foodOption.includes('Pizza')) {
-        attributes.push({key: 'Pizza Type', value: pizzaType});
+      if (foodOption === '$7') {
+        // Include pizza type when the $7 food option is selected
+        const pizzaDescription = roomName && (roomName.includes('Midway') || roomName.includes('Turning'))
+          ? `2 Slices + Drink Each (${pizzaType})`
+          : `2 Slices Each (${pizzaType})`;
+        attributes.push({key: 'Food Option', value: pizzaDescription});
+      } else {
+        attributes.push({key: 'Food Option', value: foodOption});
       }
     }
 
@@ -363,14 +376,18 @@ export function PartyForm({
       }
     });
 
-    return [
-      {
-        merchandiseId: selectedVariant.id,
-        quantity: 1,
-        selectedVariant,
-        attributes,
-      },
-    ];
+    const cartLine = {
+      merchandiseId: selectedVariant.id,
+      quantity: 1,
+      selectedVariant,
+      attributes,
+      sellingPlanId: selectedSellingPlanId || undefined,
+    };
+
+    console.log('Generated Cart Line:', cartLine);
+    console.log('=== End PartyForm Cart Debug ===');
+
+    return [cartLine];
   };
 
   // Cost calculation function
@@ -414,10 +431,13 @@ export function PartyForm({
     subtotal += baseCost;
 
     // Food cost per person (if selected)
-    if (foodOption && foodOption.includes('$7')) {
+    if (foodOption === '$7') {
       const foodCost = 7 * numParticipants;
+      const foodName = roomName && (roomName.includes('Midway') || roomName.includes('Turning'))
+        ? `Pizza + Drink (${pizzaType})`
+        : `Pizza Servings (${pizzaType})`;
       itemizedCosts.push({
-        name: 'Party Food Servings',
+        name: foodName,
         quantity: numParticipants,
         price: 7,
         total: foodCost,
@@ -487,6 +507,8 @@ export function PartyForm({
     selectedVariant,
     numParticipants,
     foodOption,
+    pizzaType,
+    roomName,
     roomDetails.baseRate,
     roomDetails.room,
     dateDetails.isWinter,
@@ -501,6 +523,17 @@ export function PartyForm({
   useEffect(() => {
     calculateCost();
   }, [calculateCost]);
+
+  // Auto-select first selling plan if available
+  useEffect(() => {
+    if (selectedVariant?.sellingPlanAllocations?.nodes?.length) {
+      setSelectedSellingPlanId(
+        selectedVariant.sellingPlanAllocations?.nodes[0].sellingPlan.id,
+      );
+    } else {
+      setSelectedSellingPlanId(null);
+    }
+  }, [selectedVariant]);
 
   // Define the steps
   const totalSteps = 6;
@@ -830,7 +863,7 @@ export function PartyForm({
               Party Rate: ${roomDetails.baseRate}/Wristband
             </h2>
             <div className="bg-gray-50 border-2 border-black rounded-lg p-3 mb-4">
-              <h3 className="text-base font-black text-black mb-2">What's Included:</h3>
+              <h3 className="text-base font-black text-black mb-2">What&apos;s Included:</h3>
               <ul className="text-sm text-black space-y-1">
                 <li>• Room Time: {getRoomTimeInfo()}</li>
                 <li>• Unlimited rides, attractions & games all day</li>
@@ -839,11 +872,11 @@ export function PartyForm({
               </ul>
             </div>
             <div className="bg-blue-50 border-2 border-black rounded-lg p-3">
-              <h3 className="text-base font-black text-black mb-2">Who Needs Wristbands:</h3>
+              <h3 className="text-base font-black text-black mb-2">Who&apos;s Needs Wristbands:</h3>
               <ul className="text-sm text-black space-y-1">
                 <li>• <strong>Kids ages 3-15:</strong> Must be included in party package</li>
                 <li>• <strong>Adults (16+):</strong> Free to enter, or can be added at same rate</li>
-                <li>• <strong>Children 2 and under:</strong> Free, or can be included if 36" tall</li>
+                <li>• <strong>Children 2 and under:</strong> Free, or can be included if 36&quot; tall</li>
               </ul>
             </div>
           </div>
@@ -901,7 +934,7 @@ export function PartyForm({
             </h2>
             <div className="bg-blue-50 border-2 border-black rounded-lg p-3 mb-4">
               <p className="text-xs text-black text-center font-bold">
-                Note: You'll have the option to add whole pizzas and drink pitchers on the next step!
+                Note: You&apos;ll have the option to add whole pizzas and drink pitchers on the next step!
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1080,7 +1113,7 @@ export function PartyForm({
                 </div>
                 <div className="text-xs">
                   <div className="font-black text-black">$22.99</div>
-                  <div className="font-bold text-gray-600">16" XL</div>
+                  <div className="font-bold text-gray-600">16&quot; XL</div>
                 </div>
               </div>
 
@@ -1118,7 +1151,7 @@ export function PartyForm({
                 </div>
                 <div className="text-xs">
                   <div className="font-black text-black">$19.99</div>
-                  <div className="font-bold text-gray-600">16" XL</div>
+                  <div className="font-bold text-gray-600">16&quot; XL</div>
                 </div>
               </div>
 
@@ -1156,7 +1189,7 @@ export function PartyForm({
                 </div>
                 <div className="text-xs">
                   <div className="font-black text-black">$22.99</div>
-                  <div className="font-bold text-gray-600">16" XL</div>
+                  <div className="font-bold text-gray-600">16&quot; XL</div>
                 </div>
               </div>
             </div>
@@ -1263,7 +1296,8 @@ export function PartyForm({
               <h3 className="text-base font-black text-black mb-2">Booking Details:</h3>
               <ul className="text-sm text-black space-y-1">
                 <li>• <strong>Non-refundable $60 deposit</strong> due at booking</li>
-                <li>• Remaining balance paid day of party based on actual attendance</li>
+                <li>• <strong>Card kept on file</strong> for remaining balance</li>
+                <li>• Balance paid day of party based on actual attendance</li>
                 <li>• Minimum of {roomDetails.minParticipants} participants required</li>
               </ul>
             </div>
@@ -1292,7 +1326,7 @@ export function PartyForm({
                     className="mt-1 w-5 h-5 accent-gray-900 transition-transform duration-200 scale-100 focus:scale-110"
                   />
                   <div className="text-sm font-semibold text-black">
-                    <strong>Socks Required:</strong> Some attractions at ZDT's require socks to participate. Please remind all of your guests to make sure to bring socks if they wish to participate in these attractions!
+                    <strong>Socks Required:</strong> Some attractions at ZDT&apos;s require socks to participate. Please remind all of your guests to make sure to bring socks if they wish to participate in these attractions!
                   </div>
                 </label>
               </div>
@@ -1350,7 +1384,7 @@ export function PartyForm({
               <div className="bg-gray-50 border-2 border-black rounded-lg p-3">
                 <h3 className="text-base font-black text-black mb-2">Food & Drinks</h3>
                 <div className="space-y-1 text-sm">
-                  <div><strong>Pizza:</strong> {foodOption ? `2 slices each (${pizzaType})` : 'None'}</div>
+                  <div><strong>Pizza:</strong> {foodOption === '$7' ? `2 slices each (${pizzaType})` : foodOption || 'None'}</div>
                   <div><strong>Drinks:</strong> {drinkChoices.join(', ') || 'None selected'}</div>
                   {(wholePepperoniPizzas > 0 || wholeCheesePizzas > 0 || wholeHalfHalfPizzas > 0) && (
                     <div className="mt-1">

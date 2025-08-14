@@ -14,6 +14,11 @@ export function AddToCartButton({
   lines: Array<OptimisticCartLineInput>;
   onClick?: () => void;
 }) {
+  // Debug logging for cart lines
+  console.log('=== AddToCartButton Debug ===');
+  console.log('Lines being sent to cart:', lines);
+  console.log('=== End AddToCartButton Debug ===');
+
   return (
     <CartForm route="/cart" inputs={{lines}} action={CartForm.ACTIONS.LinesAdd}>
       {(fetcher: FetcherWithComponents<any>) => (
