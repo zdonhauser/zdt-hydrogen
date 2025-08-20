@@ -1,14 +1,15 @@
 import {Product} from '@shopify/hydrogen/storefront-api-types';
-import React, {useRef, useEffect, useState} from 'react';
+import React, {useRef, useEffect, useState, useCallback} from 'react';
 import type { AttractionProductsQuery } from 'storefrontapi.generated';
-
 
 type ProductNode = NonNullable<
   AttractionProductsQuery['collections']
 >['nodes'][0]['products']['nodes'][0];
 
-
-// cycle these through the top panels
+/**
+ * Brand colors cycled through for items without images
+ * Creates visual variety when product images are missing
+ */
 const BRAND_COLORS = [
   'var(--color-brand-yellow)',
   'var(--color-brand-red)',
@@ -17,142 +18,233 @@ const BRAND_COLORS = [
   'var(--color-brand-pink)',
 ];
 
-export default function Carousel({products, imageShape = 'card'}: {products: ProductNode[], imageShape?: 'card' | 'square'}) {
+/**
+ * Carousel Component
+ * 
+ * A horizontally scrolling product carousel with center-focused items.
+ * Features:
+ * - Automatic centering of clicked items
+ * - Keyboard navigation (arrow buttons)
+ * - Active item scaling for emphasis
+ * - Two display modes: 'card' and 'square'
+ * 
+ * @param products - Array of product nodes to display
+ * @param imageShape - Display format: 'card' (default) or 'square'
+ */
+export default function Carousel({
+  products, 
+  imageShape = 'card'
+}: {
+  products: ProductNode[], 
+  imageShape?: 'card' | 'square'
+}) {
+  // DOM reference to the scrollable container
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Currently active (centered) item index
   const [activeIndex, setActiveIndex] = useState(0);
-  const [prevActiveIndex, setPrevActiveIndex] = useState(0);
-  const timeoutRef = useRef<number>();
-  const scrolling = useRef(false);
-  const isMounted = useRef(false);
-  // 1) watch which card is most centered
+  
+  // Track if we're currently scrolling to prevent conflicts
+  const [isScrolling, setIsScrolling] = useState(false);
+  
+  // Debounce timer for scroll end detection
+  const scrollEndTimer = useRef<NodeJS.Timeout>();
+  
+  // Flag to prevent initial auto-scroll on mount
+  const hasInitialized = useRef(false);
+
+  /**
+   * Manually scroll to center a specific item
+   * Uses precise calculations instead of scrollIntoView for consistency
+   * 
+   * @param index - Index of item to center
+   */
+  const scrollToItem = useCallback((index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    // Find the target element
+    const element = container.querySelector<HTMLElement>(
+      `[data-carousel-index="${index}"]`
+    );
+    if (!element) return;
+    
+    // Calculate exact scroll position to center the item
+    // Formula: item's left position - half container width + half item width
+    const itemLeft = element.offsetLeft;
+    const itemWidth = element.offsetWidth;
+    const containerWidth = container.clientWidth;
+    const targetScrollLeft = itemLeft - (containerWidth / 2) + (itemWidth / 2);
+    
+    // Set scrolling flag to prevent observer conflicts
+    setIsScrolling(true);
+    
+    // Perform the scroll
+    container.scrollTo({
+      left: targetScrollLeft,
+      behavior: 'smooth'
+    });
+    
+    // Clear scrolling flag after animation completes
+    // 500ms should cover most smooth scroll durations
+    setTimeout(() => {
+      setIsScrolling(false);
+    }, 500);
+  }, []);
+
+  /**
+   * Determine which item is most centered in the viewport
+   * Called after scroll ends to update active state
+   */
+  const updateActiveIndex = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    // Get all carousel items
+    const items = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-carousel-index]')
+    );
+    
+    // Calculate the center point of the viewport
+    const containerCenter = container.scrollLeft + (container.clientWidth / 2);
+    
+    // Find the item closest to center
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    items.forEach((item) => {
+      const index = parseInt(item.getAttribute('data-carousel-index') || '0');
+      
+      // Calculate item's center position
+      const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
+      const distance = Math.abs(itemCenter - containerCenter);
+      
+      // Track the closest item
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    // Update active index if it changed
+    if (closestIndex !== activeIndex && !isScrolling) {
+      setActiveIndex(closestIndex);
+    }
+  }, [activeIndex, isScrolling]);
+
+  /**
+   * Handle scroll events with debouncing
+   * Updates active index after scrolling stops
+   */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const items = Array.from(
-      container.querySelectorAll<HTMLElement>('[data-carousel-index]'),
-    );
-
-    const visibleEntries = new Map<number, IntersectionObserverEntry>();
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const containerCenter =
-          container.scrollLeft + container.clientWidth / 2;
-
-        entries.forEach((entry) => {
-          const indexAttr = entry.target.getAttribute('data-carousel-index');
-          if (!indexAttr) return;
-          const idx = Number(indexAttr);
-          if (entry.isIntersecting) {
-            visibleEntries.set(idx, entry);
-          } else {
-            visibleEntries.delete(idx);
-          }
-        });
-
-        const sortedVisible = Array.from(visibleEntries.entries())
-          .map(([idx, entry]) => {
-            const el = entry.target as HTMLElement;
-            const elCenter = el.offsetLeft + el.offsetWidth / 2;
-            const distance = Math.abs(elCenter - containerCenter);
-            return {idx, distance};
-          })
-          .sort((a, b) => a.distance - b.distance);
-
-        if (sortedVisible.length === 0) return;
-
-        console.log(
-          'number of visible items: ',
-          sortedVisible.length,
-          'visible item indices: ',
-          sortedVisible.map((v) => v.idx),
-          'distances: ',
-          sortedVisible.map((v) => v.distance),
-        );
-
-        const closestIdx = sortedVisible[0].idx;
-        console.log('closest index: ', closestIdx);
-
-        if (scrolling.current) {
-          console.log('skipping centerline scroll');
-          return;
+    
+    const handleScroll = () => {
+      // Clear any existing timer
+      clearTimeout(scrollEndTimer.current);
+      
+      // Set a new timer to detect when scrolling stops
+      scrollEndTimer.current = setTimeout(() => {
+        // Only update if we're not in a programmatic scroll
+        if (!isScrolling) {
+          updateActiveIndex();
         }
-        console.log('setting active index to centerline index ', closestIdx);
-        setActiveIndex(closestIdx);
-      },
-      {root: container, threshold: 0.6},
-    );
+      }, 150); // 150ms debounce for scroll end detection
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    
+    // Cleanup
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollEndTimer.current);
+    };
+  }, [updateActiveIndex, isScrolling]);
 
-    items.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [products]);
-
-  // 2) whenever activeIndex changes, smooth-scroll it into center
-  useEffect(() => {
-    console.log('active index changed to', activeIndex);
-    window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      if (scrolling.current) {
-        console.log('skipping scroll');
-        return;
-      }
-      console.log('scrolling to', activeIndex);
-      scrolling.current = true;
-      setTimeout(
-        () => {
-          scrolling.current = false;
-        },
-        Math.min(300 * Math.abs(activeIndex - prevActiveIndex), 300),
-      );
-      setPrevActiveIndex(activeIndex);
-      const container = containerRef.current;
-      const el = container?.querySelector<HTMLElement>(
-        `[data-carousel-index="${activeIndex}"]`,
-      );
-      if (!isMounted.current) {
-        isMounted.current = true;
-        return;
-      }
-      el?.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'center',
-      });
-    }, 100);
-  }, [activeIndex]);
-
-  const handleClick = (index: number, href: string) => {
-    if (index === activeIndex && !scrolling.current) {
+  /**
+   * Handle item clicks
+   * - Click on active item: navigate to product page
+   * - Click on inactive item: scroll to center it
+   */
+  const handleItemClick = useCallback((index: number, href: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    if (index === activeIndex && !isScrolling) {
+      // Active item clicked - navigate to product
       window.location.href = href;
     } else {
-      console.log('click on index', index);
+      // Inactive item clicked - scroll to center
       setActiveIndex(index);
+      scrollToItem(index);
     }
-  };
+  }, [activeIndex, isScrolling, scrollToItem]);
 
-  const scrollLeft = () => {
+  /**
+   * Navigate to previous item
+   */
+  const scrollLeft = useCallback(() => {
     if (activeIndex > 0) {
-      setActiveIndex(activeIndex - 1);
+      const newIndex = activeIndex - 1;
+      setActiveIndex(newIndex);
+      scrollToItem(newIndex);
     }
-  };
+  }, [activeIndex, scrollToItem]);
 
-  const scrollRight = () => {
+  /**
+   * Navigate to next item
+   */
+  const scrollRight = useCallback(() => {
     if (activeIndex < products.length - 1) {
-      setActiveIndex(activeIndex + 1);
+      const newIndex = activeIndex + 1;
+      setActiveIndex(newIndex);
+      scrollToItem(newIndex);
     }
-  };
+  }, [activeIndex, products.length, scrollToItem]);
+
+  /**
+   * Initialize carousel on mount
+   * Centers the first item without animation
+   */
+  useEffect(() => {
+    if (!hasInitialized.current && containerRef.current) {
+      hasInitialized.current = true;
+      
+      // Find the first item
+      const firstItem = containerRef.current.querySelector<HTMLElement>(
+        '[data-carousel-index="0"]'
+      );
+      
+      if (firstItem) {
+        // Calculate center position
+        const itemLeft = firstItem.offsetLeft;
+        const itemWidth = firstItem.offsetWidth;
+        const containerWidth = containerRef.current.clientWidth;
+        const targetScrollLeft = itemLeft - (containerWidth / 2) + (itemWidth / 2);
+        
+        // Scroll without animation on initial load
+        containerRef.current.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'auto'
+        });
+      }
+    }
+  }, []);
 
   return (
     <div className="relative w-full bg-[var(--color-brand-cream)] overflow-hidden">
       <div className="relative">
+        {/* Previous button - hidden on mobile */}
         <button
           className="absolute top-1/2 -translate-y-1/2 left-2 bg-black bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition hidden md:block"
           onClick={scrollLeft}
           aria-label="Scroll left"
+          disabled={activeIndex === 0}
         >
           ‹
         </button>
+        
+        {/* Scrollable container */}
         <div
           ref={containerRef}
           className="
@@ -161,46 +253,60 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
             scroll-smooth scrollbar-hide
           "
           style={{
+            // Vertical padding for visual breathing room
             paddingTop: '4rem',
             paddingBottom: '4rem',
+            // Horizontal padding to allow centering of first/last items
+            // Uses viewport width to ensure items can scroll to center
             paddingInline: 'max(1rem, calc(50vw - 180px))',
           }}
         >
           {products.map((product, i) => {
             const isActive = i === activeIndex;
+            
+            // Dynamic sizing based on active state
             const width = isActive
-              ? `clamp(280px,25vw,360px)`
-              : `clamp(200px,18vw,280px)`;
+              ? `clamp(280px, 25vw, 360px)`  // Active: larger with viewport scaling
+              : `clamp(200px, 18vw, 280px)`;  // Inactive: smaller
+              
             const height = imageShape === 'square' 
-              ? (isActive ? `clamp(580px,40vw,720px)` : `clamp(420px,32vw,560px)`)
-              : (isActive ? `clamp(460px,32vw,580px)` : `clamp(300px,24vw,460px)`);
+              ? (isActive 
+                ? `clamp(580px, 40vw, 720px)`  // Square active: taller
+                : `clamp(420px, 32vw, 560px)`) // Square inactive
+              : (isActive 
+                ? `clamp(460px, 32vw, 580px)`  // Card active: medium height
+                : `clamp(300px, 24vw, 460px)`); // Card inactive
 
             const image = product.images?.nodes[0]?.url || null;
 
             return (
               <button
                 key={product.id}
-                onMouseDown={() => handleClick(i, `/products/${product.handle}`)}
+                onClick={(e) => handleItemClick(i, `/products/${product.handle}`, e)}
                 data-carousel-index={i}
                 className={`
                   shrink-0 snap-center
-                  transition-transform duration-300 ease-in-out
+                  transition-all duration-300 ease-in-out
                   transform-gpu
-                  ${isActive ? 'scale-110 z-10 ' : 'scale-95 opacity-70'}
+                  ${isActive 
+                    ? 'scale-110 z-10'  // Active: scaled up and above others
+                    : 'scale-95 opacity-70 hover:opacity-90'} // Inactive: smaller and dimmed
                 `}
                 style={{
                   width,
                   height,
                   transformOrigin: 'center',
-                  //pointerEvents: isActive ? undefined : 'none',
+                  cursor: isActive ? 'pointer' : 'pointer',
                 }}
+                aria-label={`${product.title} - ${isActive ? 'Click to view' : 'Click to focus'}`}
               >
                 <div className="h-full rounded-xl shadow-lg overflow-hidden bg-[var(--color-light)] border-[var(--color-dark)] border-4">
                   {imageShape === 'square' ? (
+                    // Square layout: larger image with extended description area
                     <>
                       {/* Square image panel */}
                       <div
-                        className={`w-full aspect-square border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl overflow-hidden`}
+                        className="w-full aspect-square border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl overflow-hidden"
                         style={{
                           backgroundImage: image ? `url(${image})` : undefined,
                           backgroundSize: 'cover',
@@ -218,7 +324,8 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
                           </div>
                         )}
                       </div>
-                      {/* Bottom panel with title and description - 1.5x the image height */}
+                      
+                      {/* Extended description panel - 1.5x the image height */}
                       <div className="p-4 bg-[var(--color-light)]" style={{ height: '150%' }}>
                         <div className="relative h-full">
                           <h3 className={`${isActive ? 'text-xl' : 'text-lg'} font-black text-[var(--color-dark)] text-center mb-3`}>
@@ -231,16 +338,15 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
                             }}
                           />
 
-                          {/* fade‐out gradient */}
+                          {/* Fade gradient to indicate more content */}
                           <div
                             className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
                             style={{
-                              background:
-                                'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                              background: 'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
                             }}
                           />
 
-                          {/* ellipsis indicator */}
+                          {/* Visual indicator for truncated content */}
                           <br />
                           <span
                             className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
@@ -252,10 +358,11 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
                       </div>
                     </>
                   ) : (
+                    // Card layout: compact with image and description
                     <>
-                      {/* Card shape - image with title overlay */}
+                      {/* Card image with title overlay */}
                       <div
-                        className={`flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full`}
+                        className="flex flex-col items-center justify-center p-4 border-[var(--color-dark)] border-b-4 rounded-br-xl rounded-bl-xl w-full"
                         style={{
                           height: isActive ? '40%' : '50%',
                           backgroundImage: image ? `url(${image})` : undefined,
@@ -265,47 +372,45 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
                         }}
                       >
                         {!image && (
+                          // Fallback when no image available
                           <>
                             <img
                               src="/logos/black.png"
                               alt="ZDT's Logo"
                               className="w-50"
                             />
-                            <p
-                              className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}
-                            >
+                            <p className={`${isActive ? 'text-xl' : 'text-sm'} font-black text-[var(--color-dark)] text-center m-0 p-0`}>
                               {product.title}
                             </p>
                           </>
                         )}
                         {image && (
-                          <h3
-                            className="text-[var(--color-light)] text-center h-full flex items-end justify-end drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]"
-                          >
+                          // Title overlay on image
+                          <h3 className="text-[var(--color-light)] text-center h-full flex items-end justify-end drop-shadow-[0_2px_0_rgba(0,0,0,0.8)]">
                             {product.title}
                           </h3>
                         )}
                       </div>
-                      {/* Card shape - description only panel */}
+                      
+                      {/* Card description panel */}
                       <div className="p-4 bg-[var(--color-light)] h-[55%]">
                         <div className="relative h-full">
-                            <div
-                              className="prose max-w-none h-full overflow-hidden"
-                              dangerouslySetInnerHTML={{
-                                __html: product.descriptionHtml,
-                              }}
-                            />
-
-                          {/* fade‐out gradient */}
                           <div
-                            className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
-                            style={{
-                              background:
-                                'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                            className="prose max-w-none h-full overflow-hidden"
+                            dangerouslySetInnerHTML={{
+                              __html: product.descriptionHtml,
                             }}
                           />
 
-                          {/* ellipsis indicator */}
+                          {/* Fade gradient for truncated content */}
+                          <div
+                            className="pointer-events-none absolute bottom-0 left-0 right-0 h-8"
+                            style={{
+                              background: 'linear-gradient(to top, var(--color-light), rgba(255,255,255,0))',
+                            }}
+                          />
+
+                          {/* Ellipsis indicator */}
                           <br />
                           <span
                             className="pointer-events-none absolute left-0 right-0 bottom-[-10%] text-xl font-bold text-[var(--color-brand-dark)] text-center w-full"
@@ -322,10 +427,13 @@ export default function Carousel({products, imageShape = 'card'}: {products: Pro
             );
           })}
         </div>
+        
+        {/* Next button - hidden on mobile */}
         <button
           className="absolute top-1/2 -translate-y-1/2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full z-20 hover:bg-opacity-75 transition hidden md:block"
           onClick={scrollRight}
           aria-label="Scroll right"
+          disabled={activeIndex === products.length - 1}
         >
           ›
         </button>
