@@ -14,6 +14,7 @@ interface HeaderProps {
   cart: Promise<CartApiQueryFragment | null>;
   isLoggedIn: Promise<boolean>;
   publicStoreDomain: string;
+  displayMode?: 'demo' | 'public';
 }
 
 type Viewport = 'desktop' | 'mobile';
@@ -23,6 +24,7 @@ export function Header({
   isLoggedIn,
   cart,
   publicStoreDomain,
+  displayMode = 'demo',
 }: HeaderProps) {
   const {menu} = header;
 
@@ -59,24 +61,35 @@ export function Header({
           />
         </NavLink>
 
-        <HeaderMenuMobileToggle />
+        {displayMode === 'demo' && <HeaderMenuMobileToggle />}
 
-        {/* Desktop menu */}
-
-        <div className="flex items-center justify-end gap-4">
-        <HeaderMenu
-          menu={menu}
-          viewport="desktop"
-          primaryDomainUrl={header.shop.primaryDomain.url}
-          publicStoreDomain={publicStoreDomain}
-        />
-        </div>
+        {/* Desktop menu - only show in demo mode */}
+        {displayMode === 'demo' && (
+          <div className="flex items-center justify-end gap-4">
+            <HeaderMenu
+              menu={menu}
+              viewport="desktop"
+              primaryDomainUrl={header.shop.primaryDomain.url}
+              publicStoreDomain={publicStoreDomain}
+            />
+          </div>
+        )}
+        
+        {/* Cart for public mode */}
+        {displayMode === 'public' && (
+          <div className="flex items-center justify-end">
+            <CartToggle cart={cart} />
+          </div>
+        )}
       </header>
 
 
-      <div className="fixed bottom-6 right-4 z-50">
-        <CartToggle cart={cart} />
-      </div>
+      {/* Floating cart for demo mode */}
+      {displayMode === 'demo' && (
+        <div className="fixed bottom-6 right-4 z-50">
+          <CartToggle cart={cart} />
+        </div>
+      )}
 
       {/* Mobile menu inside Aside */}
       <Aside type="mobile" heading="Menu">

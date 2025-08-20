@@ -26,6 +26,8 @@ export function PartyForm({
   const partyTime = selectedVariant?.title.split(' / ')[1];
   const roomName = selectedVariant?.title.split(' / ')[0];
   const depositDue = Number(selectedVariant?.price?.amount);
+  const notAvailable = tags?.includes?.('notavailable');
+  const notOnline = tags?.includes?.('notonline');
 
   // Get park hours from hoursData for the specific date
   const getParkHours = () => {
@@ -1477,6 +1479,8 @@ export function PartyForm({
           </div>
 
           {/* Continue to Checkout Button */}
+          {!(notAvailable || notOnline) && (
+
           <div className="bg-white border-4 border-black rounded-xl p-4 shadow-xl">
             <div className="text-center mb-4">
               <h2 className="text-xl md:text-2xl font-black uppercase text-black mb-1 tracking-wide">
@@ -1500,6 +1504,20 @@ export function PartyForm({
               </AddToCartButton>
             </div>
           </div>
+          )}
+                {/* Unavailable Items Notice */}
+      {(notAvailable || notOnline) && (
+        <div className="mt-8 flex justify-center">
+        <div className="mb-6 bg-[var(--color-brand-red)] border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center shadow-lg">
+          <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+            ⚠️ Not Currently Available
+          </h3>
+          <p className="text-lg font-bold text-white">
+            This item is not currently available for purchase.
+          </p>
+        </div>
+        </div>
+      )}
         </>
       )}
 

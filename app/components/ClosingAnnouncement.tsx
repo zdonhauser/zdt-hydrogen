@@ -21,23 +21,16 @@ export default function ClosingAnnouncement() {
           
           <div className="prose prose-lg max-w-none text-center">
             <p className="text-lg md:text-xl font-bold text-[var(--color-brand-dark)] leading-relaxed mb-6">
-              For more than 18 years, we've had the privilege of filling your days with smiles, thrills, and unforgettable memories. After much consideration, we've made the difficult decision to close ZDT's Amusement Park. Our last day of operation will be <span className="text-[var(--color-brand-red)] font-black">Sunday, August 17, 2025</span>. We would love to see you one more time before the gates close.
+              For more than 18 years, we had the privilege of filling your days with smiles, thrills, and unforgettable memories. After much consideration, we made the difficult decision to close ZDT's Amusement Park. 
+              <br /> 
+            <span className="text-[var(--color-brand-red)] font-black">We are now permanently closed as of August 17, 2025</span>.
             </p>
-            
-            <p className="text-base md:text-lg font-semibold text-[var(--color-brand-dark)] mb-4">
-              If you've been holding on to ZDT's gift cards or 'any day' tickets, please plan to redeem them before that date.
-            </p>
-            
-            <p className="text-base md:text-lg font-semibold text-[var(--color-brand-dark)] mb-4">
-              <strong>Current members:</strong> Keep an eye on your inbox—we sent an email explaining how memberships will be handled going forward.
-            </p>
-            
+
             <p className="text-lg md:text-xl font-bold text-[var(--color-brand-dark)] mb-6">
               Thank you for making ZDT's part of your story. We truly couldn't have done it without you.
             </p>
             
             <p className="text-base md:text-lg font-semibold text-[var(--color-brand-dark)] italic mb-8">
-              Hope to see you around the park,<br />
               <span className="font-black">The ZDT's Team</span>
             </p>
           </div>
@@ -46,19 +39,19 @@ export default function ClosingAnnouncement() {
           <div className="mt-12 pt-8 border-t-4 border-[var(--color-brand-dark)] text-center">
             <div className="bg-[var(--color-brand-yellow)] border-4 border-[var(--color-brand-dark)] rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <h3 className="text-xl md:text-2xl font-black text-[var(--color-brand-dark)] mb-4 uppercase tracking-wide">
-                Want a Piece of ZDT's History?
+                Own a Piece of ZDT's History
               </h3>
               <p className="text-base md:text-lg font-bold text-[var(--color-brand-dark)] mb-4">
-                Want to purchase a piece of ZDT's? Click here to view our current inventory of games and equipment for sale.
+                Purchase a piece of ZDT's legacy! Browse our remaining inventory of equipment available for sale.
               </p>
               <p className="text-sm md:text-base font-semibold text-[var(--color-brand-dark)] mb-4">
-                All park buildings will be up for lease or sale starting in September 2025 - please contact us for details.
+                Park buildings are also available for lease or sale - please contact us for details.
               </p>
               <Link
                 to="/collections/assets"
                 className="inline-block bg-[var(--color-brand-green)] hover:bg-[var(--color-brand-green-hover)] text-white font-black px-8 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:shadow-xl transition-all duration-200 text-lg uppercase tracking-wider transform hover:scale-105"
               >
-                View Equipment For Sale →
+                Browse Available Equipment →
               </Link>
             </div>
           </div>

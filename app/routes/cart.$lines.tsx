@@ -19,6 +19,7 @@ import {redirect, type LoaderFunctionArgs} from '@shopify/remix-oxygen';
  * ```
  */
 export async function loader({request, context, params}: LoaderFunctionArgs) {
+  // Allow cart creation/checkout on all sites (needed for assets purchases)
   const {cart} = context;
   const {lines} = params;
   if (!lines) return redirect('/cart');

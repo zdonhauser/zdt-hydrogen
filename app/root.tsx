@@ -3,6 +3,7 @@ import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
 import { Outlet, useRouteError, isRouteErrorResponse, type ShouldRevalidateFunction } from 'react-router';
 import favicon from '~/assets/favicon.svg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
+import {getDisplayMode} from '~/lib/domain';
 
 export type RootLoader = typeof loader;
 
@@ -57,52 +58,6 @@ export function links() {
 }
 
 export async function loader(args: LoaderFunctionArgs) {
-  // Check if park is closed based on date - Central Time
-  const url = new URL(args.request.url);
-  const dateOverride = url.searchParams.get('date');
-  const PARK_CLOSING_DATE = new Date('2025-08-17T23:59:59-05:00'); // Central Time
-  
-  // Helper function to create a date in Central Time
-  function createCentralDate(dateString: string): Date {
-    // If no time zone specified, assume Central Time
-    if (!dateString.includes('T') && !dateString.includes(' ')) {
-      // Just a date like "2025-08-18"
-      return new Date(dateString + 'T00:00:00-05:00');
-    }
-    
-    // If it has time but no timezone, assume Central Time
-    if (!dateString.includes('+') && !dateString.includes('-05:00') && !dateString.includes('Z')) {
-      return new Date(dateString + '-05:00');
-    }
-    
-    return new Date(dateString);
-  }
-  
-  let isParkClosed = false;
-  if (dateOverride) {
-    const testDate = createCentralDate(dateOverride);
-    if (!isNaN(testDate.getTime())) {
-      isParkClosed = testDate > PARK_CLOSING_DATE;
-    }
-  } else {
-    isParkClosed = new Date() > PARK_CLOSING_DATE;
-  }
-  
-  // If park is closed, return minimal data
-  if (isParkClosed) {
-    return {
-      isParkClosed: true,
-      cart: null,
-      footer: null,
-      header: null,
-      isLoggedIn: false,
-      shop: null,
-      consent: null,
-      selectedLocale: null,
-      publicStoreDomain: '',
-    };
-  }
-  
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
@@ -110,10 +65,14 @@ export async function loader(args: LoaderFunctionArgs) {
   const criticalData = await loadCriticalData(args);
 
   const {storefront, env} = args.context;
+  
+  // Determine display mode based on domain
+  const displayMode = getDisplayMode(args.request);
 
   return {
     ...deferredData,
     ...criticalData,
+    displayMode,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
     shop: getShopAnalytics({
       storefront,

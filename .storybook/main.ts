@@ -1,27 +1,28 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
-  "stories": [
+  stories: [
     "../app/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-    "../stories/**/*.mdx",
+    "../stories/**/*.mdx", 
     "../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"
   ],
-  "addons": [
-    "@storybook/addon-essentials",
+  addons: [
     "@storybook/addon-onboarding",
-    "@storybook/addon-interactions"
+    "storybook-addon-remix-react-router",
+    "@storybook/addon-docs"
   ],
-  "framework": {
-    "name": "@storybook/react-vite",
-    "options": {}
+  framework: {
+    name: "@storybook/react-vite",
+    options: {
+      builder: {
+        viteConfigPath: 'storybook-vite.config.ts',
+      },
+    }
   },
-  async viteFinal(config, { configType }) {
-    // Use a completely separate Vite config for Storybook
-    const { mergeConfig } = await import('vite')
-    const storybookViteConfig = await import('./vite.config.ts')
-    
-    return mergeConfig(config, storybookViteConfig.default)
+  core: {
+    disableTelemetry: true,
   },
+  // Using separate storybook-vite.config.ts to avoid React Router plugin conflicts
   typescript: {
     reactDocgen: 'react-docgen-typescript',
   }

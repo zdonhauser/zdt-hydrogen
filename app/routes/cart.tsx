@@ -8,6 +8,7 @@ import {
   type HeadersFunction,
 } from '@shopify/remix-oxygen';
 import {CartMain} from '~/components/CartMain';
+import {requireDemo} from '~/lib/domain';
 
 export const meta: MetaFunction = () => {
   return [{title: `ZDT's Amusement Park | Cart`}];
@@ -136,8 +137,9 @@ export async function action({request, context}: ActionFunctionArgs) {
   );
 }
 
-export async function loader({context}: LoaderFunctionArgs) {
-  const {cart} = context;
+export async function loader(args: LoaderFunctionArgs) {
+  // Allow cart access on all sites (needed for assets purchases)
+  const {cart} = args.context;
   return await cart.get();
 }
 

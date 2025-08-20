@@ -198,17 +198,7 @@ useEffect(() => {
 
   return (
     <div ref={formRef} className="product-form m-4">
-      {/* Not Available Banner */}
-      {notAvailable && (
-        <div className="mb-6 bg-[var(--color-brand-red)] border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center shadow-lg">
-          <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
-            ⚠️ Not Currently Available
-          </h3>
-          <p className="text-lg font-bold text-white">
-            This item is not currently available for purchase.
-          </p>
-        </div>
-      )}
+
       
       {productOptions.map((option) => {
         // If there is only a single value in the option values, don't display the option
@@ -552,7 +542,7 @@ useEffect(() => {
         </>
       ):null}
 
-{!(notAvailable || notOnline) && (
+{!(notOnline) && (
         <div className="mt-8 flex flex-col items-center gap-4 justify-center">
           {/* Show price unless it's an attraction or sold out */}
           {!tags?.includes('attraction') && selectedVariant?.availableForSale && selectedVariant?.price && (
@@ -685,16 +675,14 @@ useEffect(() => {
       {/* Unavailable Items Notice */}
       {(notAvailable || notOnline) && (
         <div className="mt-8 flex justify-center">
-          <div className="bg-gray-100 border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center max-w-md">
-            <p className="text-lg font-black text-[var(--color-brand-dark)] mb-2">
-              {notAvailable ? 'Not Currently Available' : 'Not Available Online'}
-            </p>
-            <p className="text-sm font-semibold text-gray-600">
-              {notAvailable 
-                ? 'This item is not currently available for purchase.' 
-                : 'This item is not available for online purchase. Please visit the park or call for availability.'}
-            </p>
-          </div>
+        <div className="mb-6 bg-[var(--color-brand-red)] border-4 border-[var(--color-brand-dark)] rounded-xl p-6 text-center shadow-lg">
+          <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+            ⚠️ Not Currently Available
+          </h3>
+          <p className="text-lg font-bold text-white">
+            This item is not currently available for purchase.
+          </p>
+        </div>
         </div>
       )}
 

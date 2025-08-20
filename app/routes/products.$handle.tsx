@@ -12,6 +12,7 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
 import {PartyForm} from '~/components/PartyForm';
+import {requireDemo} from '~/lib/domain';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const title = data?.product?.title ?? 'ZDT’s';
@@ -23,10 +24,25 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
 };
 
 export async function loader(args: LoaderFunctionArgs) {
-  const deferredData = loadDeferredData(args);
-  const criticalData = await loadCriticalData(args);
-  console.log('new page loaded');
-  return {...deferredData, ...criticalData};
+  // Check if this product is in an allowed collection for public access
+  const product = await loadCriticalData(args);
+  const isInAssetsCollection = product?.product?.collections?.nodes?.some(
+    (collection: any) => collection.handle === 'assets'
+  );
+  
+  if (isInAssetsCollection) {
+    // Allow access to products in the assets collection
+    const deferredData = loadDeferredData(args);
+    console.log('new page loaded');
+    return {...deferredData, ...product};
+  } else {
+    // Protect other products - only allow access on demo sites
+    requireDemo(args.request);
+    const deferredData = loadDeferredData(args);
+    const criticalData = await loadCriticalData(args);
+    console.log('new page loaded');
+    return {...deferredData, ...criticalData};
+  }
 }
 
 async function loadCriticalData({
@@ -291,6 +307,11 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantExistence
     encodedVariantAvailability
     requiresSellingPlan
+    collections(first: 10) {
+      nodes {
+        handle
+      }
+    }
     media(first: 10) {
       nodes {
         ... on MediaImage {

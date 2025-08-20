@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 // Simple Button component for testing Storybook setup
 const Button = ({ children, variant = 'primary', ...props }: {

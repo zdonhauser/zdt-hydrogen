@@ -5,10 +5,13 @@ import type {
   FooterQuery,
   HeaderQuery,
 } from 'storefrontapi.generated';
-import {Aside} from '~/components/Aside';
+import {Aside, useAside} from '~/components/Aside';
 import {Footer} from '~/components/Footer';
 import {Header, HeaderMenu} from '~/components/Header';
 import {CartMain} from '~/components/CartMain';
+import {ShoppingCartIcon} from '@heroicons/react/24/outline';
+import {useOptimisticCart, useAnalytics, type CartViewPayload} from '@shopify/hydrogen';
+import {useAsyncValue} from 'react-router';
 import {
   SEARCH_ENDPOINT,
   SearchFormPredictive,
@@ -21,6 +24,7 @@ interface PageLayoutProps {
   header: HeaderQuery;
   isLoggedIn: Promise<boolean>;
   publicStoreDomain: string;
+  displayMode?: 'demo' | 'public';
   children?: React.ReactNode;
 }
 
@@ -31,26 +35,33 @@ export function PageLayout({
   header,
   isLoggedIn,
   publicStoreDomain,
+  displayMode = 'demo',
 }: PageLayoutProps) {
+  // Always show cart functionality (needed for assets purchases on public sites)
+  const showCart = true;
+  
   return (
     <Aside.Provider>
-      <CartAside cart={cart} />
-      <SearchAside />
-      <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
+      {showCart && <CartAside cart={cart} />}
+      {displayMode === 'demo' && <SearchAside />}
+      {displayMode === 'demo' && <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />}
       {header && (
         <Header
           header={header}
           cart={cart}
           isLoggedIn={isLoggedIn}
           publicStoreDomain={publicStoreDomain}
+          displayMode={displayMode}
         />
       )}
       <main>{children}</main>
+      
       <Footer
         footer={footer}
         header={header}
         publicStoreDomain={publicStoreDomain}
         isLoggedIn={isLoggedIn}
+        displayMode={displayMode}
       />
     </Aside.Provider>
   );

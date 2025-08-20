@@ -7,6 +7,7 @@ interface FooterProps {
   header: HeaderQuery;
   publicStoreDomain: string;
   isLoggedIn: Promise<boolean>;
+  displayMode?: 'demo' | 'public';
 }
 
 export function Footer({
@@ -14,13 +15,15 @@ export function Footer({
   header,
   publicStoreDomain,
   isLoggedIn,
+  displayMode = 'demo',
 }: FooterProps) {
   return (
     <Suspense>
       <Await resolve={footerPromise}>
         {(footer) => (
           <footer className="bg-black text-white py-10 px-4 text-center text-sm font-medium tracking-wide">
-            {footer?.menu && header.shop.primaryDomain?.url && (
+            {/* Only show menu links in demo mode */}
+            {displayMode === 'demo' && footer?.menu && header.shop.primaryDomain?.url && (
               <FooterMenu
                 menu={footer.menu}
                 primaryDomainUrl={header.shop.primaryDomain.url}

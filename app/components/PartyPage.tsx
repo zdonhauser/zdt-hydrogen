@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
 
@@ -51,12 +52,12 @@ export default function PartyPage() {
               </div>
               <div className="text-sm text-center space-y-5">
                 {room.features.map((feature, idx) => (
-                  <>
-                    <div key={idx} className="text-lg">
+                  <React.Fragment key={idx}>
+                    <div className="text-lg">
                       {feature}
                     </div>
                     <hr />
-                  </>
+                  </React.Fragment>
                 ))}
               </div>
             </Link>

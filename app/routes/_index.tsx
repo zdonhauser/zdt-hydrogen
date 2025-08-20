@@ -1,5 +1,5 @@
 import {type LoaderFunctionArgs} from '@shopify/remix-oxygen';
-import { useLoaderData, type MetaFunction } from 'react-router';
+import { useLoaderData, useRouteLoaderData, type MetaFunction } from 'react-router';
 import Hero from '~/components/Hero';
 import ScrollingRibbon from '~/components/ScrollingRibbon';
 import Carousel from '~/components/Carousel';
@@ -8,6 +8,7 @@ import ClosingAnnouncement from '~/components/ClosingAnnouncement';
 import { PricingInfo } from '~/components/PricingInfo';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
 import {AttractionProductsQuery} from 'storefrontapi.generated';
+import {RootLoader} from '~/root';
 
 export const meta: MetaFunction = () => {
   return [{title: 'ZDT’s Amusement Park'}];
@@ -94,7 +95,22 @@ function loadDeferredData({context}: LoaderFunctionArgs) {
 export default function Homepage() {
   const {attractions, admissionProducts, couponsDeals, hoursData, waterData, notesData} =
     useLoaderData<typeof loader>();
+  
+  // Get display mode from root loader
+  const rootData = useRouteLoaderData<RootLoader>('root');
+  const displayMode = rootData?.displayMode || 'public';
 
+  // For public sites, show only Hero and Closing Announcement
+  if (displayMode === 'public') {
+    return (
+      <>
+        <Hero id="hero" />
+        <ClosingAnnouncement />
+      </>
+    );
+  }
+
+  // For demo sites, show full homepage
   return (
     <>
       <Hero id="hero" />

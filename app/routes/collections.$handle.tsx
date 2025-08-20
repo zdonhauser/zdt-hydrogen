@@ -11,12 +11,16 @@ import {useVariantUrl} from '~/lib/variants';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import PartyCalendar from '~/components/PartyCalendar';
 import { AnimatedBackground } from '~/components/AnimatedBackground';
+import {requireDemo} from '~/lib/domain';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   return [{title: `ZDT's Amusement Park | ${data?.collection.title ?? ''}`}];
 };
 
 export async function loader(args: LoaderFunctionArgs) {
+  // Protect route - allow assets collection on public sites
+  requireDemo(args.request, ['assets']);
+  
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
@@ -38,7 +42,7 @@ async function loadCriticalData({
   const {handle} = params;
   const {storefront} = context;
   const paginationVariables = getPaginationVariables(request, {
-    pageBy: handle === 'party-booking' ? 100 : 8,
+    pageBy: handle === 'party-booking' ? 100 : 30,
   });
 
   if (!handle) {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import {Pagination} from '@shopify/hydrogen';
 
 /**
@@ -15,41 +15,80 @@ export function PaginatedResourceSection<NodesType>({
   resourcesClassName?: string;
 }) {
   const nextLinkRef = useRef<HTMLAnchorElement>(null);
+  const previousLinkRef = useRef<HTMLAnchorElement>(null);
 
   return (
     <Pagination connection={connection}>
       {({nodes, isLoading, PreviousLink, NextLink}) => {
-        const resourcesMarkup = nodes.map((node, index) =>
+        // Sort nodes to put available items first, sold out items last
+        const sortedNodes = useMemo(() => {
+          return [...nodes].sort((a, b) => {
+            // Type assertion to access availableForSale property
+            const aNode = a as any;
+            const bNode = b as any;
+            
+            // Available items first, sold out items last
+            if (aNode.availableForSale && !bNode.availableForSale) return -1;
+            if (!aNode.availableForSale && bNode.availableForSale) return 1;
+            return 0; // maintain original order within groups
+          });
+        }, [nodes]);
+
+        const resourcesMarkup = sortedNodes.map((node, index) =>
           children({node, index}),
         );
 
-        // Infinite scroll effect
+        // Infinite scroll effect for both next and previous
         useEffect(() => {
           const nextLink = nextLinkRef.current;
-          if (!nextLink) return;
+          const previousLink = previousLinkRef.current;
+          
+          const observers: IntersectionObserver[] = [];
 
-          const observer = new IntersectionObserver(
-            (entries) => {
-              entries.forEach((entry) => {
-                if (entry.isIntersecting && !isLoading) {
-                  nextLink.click();
-                }
-              });
-            },
-            { rootMargin: '200px' }
-          );
+          // Observer for next link (load more)
+          if (nextLink) {
+            const nextObserver = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting && !isLoading) {
+                    nextLink.click();
+                  }
+                });
+              },
+              { rootMargin: '200px' }
+            );
+            nextObserver.observe(nextLink);
+            observers.push(nextObserver);
+          }
 
-          observer.observe(nextLink);
+          // Observer for previous link (load previous)
+          if (previousLink) {
+            const previousObserver = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting && !isLoading) {
+                    previousLink.click();
+                  }
+                });
+              },
+              { rootMargin: '200px' }
+            );
+            previousObserver.observe(previousLink);
+            observers.push(previousObserver);
+          }
 
           return () => {
-            observer.disconnect();
+            observers.forEach(observer => observer.disconnect());
           };
         }, [isLoading]);
 
         return (
           <div>
             <div className="text-center mb-6">
-              <PreviousLink className="inline-block bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-black px-8 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:shadow-xl transition-all duration-200 text-lg uppercase tracking-wider transform hover:scale-105">
+              <PreviousLink 
+                ref={previousLinkRef}
+                className="inline-block bg-[var(--color-brand-blue)] hover:bg-[var(--color-brand-blue-hover)] text-white font-black px-8 py-4 rounded-xl border-4 border-[var(--color-brand-dark)] shadow-lg hover:shadow-xl transition-all duration-200 text-lg uppercase tracking-wider transform hover:scale-105"
+              >
                 {isLoading ? 'Loading...' : <span>↑ Load Previous</span>}
               </PreviousLink>
             </div>
