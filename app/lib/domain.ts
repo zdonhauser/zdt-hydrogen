@@ -10,7 +10,7 @@ export function isDemoSite(request: Request): boolean {
   const hostname = url.hostname.toLowerCase();
   
   // Check for demo subdomain
-  return hostname.startsWith('demo.') || hostname.startsWith('localhost') || hostname.startsWith('react.'); 
+  return hostname.startsWith('demo.') || hostname.startsWith('localhost')  || hostname.startsWith('10.0') || hostname.startsWith('react.'); 
 }
 
 export function getDisplayMode(request: Request): 'demo' | 'public' {

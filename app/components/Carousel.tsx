@@ -44,15 +44,11 @@ export default function Carousel({
   // Currently active (centered) item index
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // Track active index in a ref to avoid re-creating observer
-  const activeIndexRef = useRef(0);
-  
   // Track if we're currently scrolling to prevent conflicts
   const [isScrolling, setIsScrolling] = useState(false);
-  const isScrollingRef = useRef(false);
   
-  // Debounce timer for intersection changes
-  const updateTimer = useRef<NodeJS.Timeout>();
+  // Debounce timer for scroll end detection
+  const scrollEndTimer = useRef<NodeJS.Timeout>();
   
   // Flag to prevent initial auto-scroll on mount
   const hasInitialized = useRef(false);
@@ -82,7 +78,6 @@ export default function Carousel({
     
     // Set scrolling flag to prevent observer conflicts
     setIsScrolling(true);
-    isScrollingRef.current = true;
     
     // Perform the scroll
     container.scrollTo({
@@ -94,55 +89,95 @@ export default function Carousel({
     // 500ms should cover most smooth scroll durations
     setTimeout(() => {
       setIsScrolling(false);
-      isScrollingRef.current = false;
     }, 500);
   }, []);
 
   /**
    * Determine which item is most centered in the viewport
-   * Uses IntersectionObserver for performance
+   * Called after scroll ends to update active state
+   */
+  const updateActiveIndex = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    // Get all carousel items
+    const items = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-carousel-index]')
+    );
+    
+    // Calculate the center point of the viewport
+    const containerCenter = container.scrollLeft + (container.clientWidth / 2);
+    
+    // Find the item closest to center
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    items.forEach((item) => {
+      const index = parseInt(item.getAttribute('data-carousel-index') || '0');
+      
+      // Calculate item's center position
+      const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
+      const distance = Math.abs(itemCenter - containerCenter);
+      
+      // Track the closest item
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    // Update active index if it changed
+    if (closestIndex !== activeIndex && !isScrolling) {
+      setActiveIndex(closestIndex);
+    }
+  }, [activeIndex, isScrolling]);
+
+  /**
+   * Handle scroll events with debouncing
+   * Updates active index after scrolling stops
    */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-  
-    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
-      if (isScrollingRef.current) return;
-      clearTimeout(updateTimer.current);
-      console.log('Intersection detected');
-      if (isScrollingRef.current) return;
-        
-        // Find the intersecting item (should be only one with tight margins)
-        const intersectingEntry = entries.find(entry => entry.isIntersecting);
-        console.log('Intersecting entry:', intersectingEntry);
-        if (intersectingEntry) {
-          const newIndex = parseInt(
-            intersectingEntry.target.getAttribute('data-carousel-index') || '0'
-          );
+    
+    const handleScrollEnd = (event: Event | null) => {
+      event?.stopPropagation();
+      event?.preventDefault();
+      // Only update if we're not in a programmatic scroll
+      if (!isScrolling) {
+        updateActiveIndex();
+      }
 
-          console.log('New index:', newIndex, 'Current:', activeIndexRef.current);
-          
-          // Only update state, don't trigger scrolling
-          if (newIndex !== activeIndexRef.current) {
-            activeIndexRef.current = newIndex;
-            setActiveIndex(newIndex);
-          }
-        }
+      if ('onscrollend' in window) {
+        console.log('onscrollend ended scroll');
+      } else{
+        console.log('timer ended scroll')
+      }
     };
-  
-    const observer = new IntersectionObserver(handleIntersection, {
-      rootMargin: '0px -48% 0px -48%', // Center 2% detection zone
-    });
-  
-    const items = container.querySelectorAll<HTMLElement>('[data-carousel-index]');
-    items.forEach((item) => observer.observe(item));
-  
-    return () => {
-      clearTimeout(updateTimer.current);
-      observer.disconnect();
-    };
-  }, []);
-
+    
+    // Check for scrollend support
+    if ('onscrollend' in window) {
+      // Use native scrollend event
+      container.addEventListener('scrollend', event => handleScrollEnd(event));
+      
+      return () => {
+        container.removeEventListener('scrollend', event => handleScrollEnd(event));
+      };
+    } else {
+      // Fallback to debounced scroll for browsers without scrollend support
+      const handleScroll = () => {
+        clearTimeout(scrollEndTimer.current);
+        scrollEndTimer.current = setTimeout(() => handleScrollEnd(null), 150);
+      };
+      
+      container.addEventListener('scroll', handleScroll);
+      
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+        clearTimeout(scrollEndTimer.current);
+      };
+    }
+  }, [updateActiveIndex, isScrolling]);
 
   /**
    * Handle item clicks
@@ -158,7 +193,6 @@ export default function Carousel({
     } else {
       // Inactive item clicked - scroll to center
       setActiveIndex(index);
-      activeIndexRef.current = index;
       scrollToItem(index);
     }
   }, [activeIndex, isScrolling, scrollToItem]);
@@ -170,7 +204,6 @@ export default function Carousel({
     if (activeIndex > 0) {
       const newIndex = activeIndex - 1;
       setActiveIndex(newIndex);
-      activeIndexRef.current = newIndex;
       scrollToItem(newIndex);
     }
   }, [activeIndex, scrollToItem]);
@@ -182,7 +215,6 @@ export default function Carousel({
     if (activeIndex < products.length - 1) {
       const newIndex = activeIndex + 1;
       setActiveIndex(newIndex);
-      activeIndexRef.current = newIndex;
       scrollToItem(newIndex);
     }
   }, [activeIndex, products.length, scrollToItem]);
@@ -275,7 +307,7 @@ export default function Carousel({
                   transform-gpu
                   ${isActive 
                     ? 'scale-110 z-10'  // Active: scaled up and above others
-                    : 'scale-95 opacity-70 hover:opacity-90'} 
+                    : 'scale-95 opacity-70 hover:opacity-90'} // Inactive: smaller and dimmed
                 `}
                 style={{
                   width,
