@@ -5,6 +5,34 @@ node_modules
 /public/build
 /.mf
 .env
+.env.local
+.env.production
+.env.staging
 .shopify
 .react-router
+storybook-static/
 *storybook.log
+*.log
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
