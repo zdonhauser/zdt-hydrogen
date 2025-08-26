@@ -17,6 +17,8 @@ import {
   SearchFormPredictive,
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
+import DemoDisclaimer from '~/components/DemoDisclaimer';
+import {DemoIndicators} from '~/components/DemoWatermark';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -42,6 +44,14 @@ export function PageLayout({
   
   return (
     <Aside.Provider>
+      {/* Demo site indicators */}
+      {displayMode === 'demo' && (
+        <>
+          <DemoDisclaimer />
+          <DemoIndicators />
+        </>
+      )}
+      
       {showCart && <CartAside cart={cart} />}
       {displayMode === 'demo' && <SearchAside />}
       {displayMode === 'demo' && <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />}

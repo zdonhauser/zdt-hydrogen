@@ -147,12 +147,6 @@ export default function Carousel({
       if (!isScrolling) {
         updateActiveIndex();
       }
-
-      if ('onscrollend' in window) {
-        console.log('onscrollend ended scroll');
-      } else{
-        console.log('timer ended scroll')
-      }
     };
     
     // Check for scrollend support
